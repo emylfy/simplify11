@@ -82,9 +82,9 @@ echo %cMauve% '%cGrey% [6] Check other cool stuff                             %c
 echo %cMauve% '%cGrey% [7] Exit                                               %cMauve%'%cReset%
 echo %cMauve% +--------------------------------------------------------+%cReset%
 if "%hasRestorePoint%"=="1" (
-    choice /C 01234567 /N /M "Select and press Enter: "
+    choice /C 01234567 /N /M " "
 ) else (
-    choice /C 1234567 /N /M "Select and press Enter: "
+    choice /C 1234567 /N /M " "
 )
 if "%hasRestorePoint%"=="1" (
     if %errorlevel%==1 goto applyRestorePoint
@@ -153,10 +153,7 @@ echo.
 choice /C 12 /N /M "%cGrey%Select your storage type: %cReset%"
 
 if errorlevel 2 (
-    echo %cGrey%HDD selected - Applying HDD optimizations...%cReset%
-    :: Enable Superfetch/Prefetch for HDDs as they benefit from it
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnableSuperfetch" /t REG_DWORD /d "1" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnablePrefetcher" /t REG_DWORD /d "3" /f
+    echo %cGrey%HDD selected - Skipping SSD optimizations...%cReset%
 ) else (
     echo %cGreen%SSD/NVMe selected - Applying SSD optimizations...%cReset%
     :: Enable and optimize TRIM for SSD
@@ -165,10 +162,142 @@ if errorlevel 2 (
     schtasks /Change /TN "\Microsoft\Windows\Defrag\ScheduledDefrag" /Disable
     :: Disable NTFS last access time updates
     fsutil behavior set disablelastaccess 1
+    :: Disable creation of MS-DOS short file names
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsDisable8dot3NameCreation" /t REG_DWORD /d 1 /f
 )
 
-:: Mouse & Keyboard Tweaks
+:checkLaptop
+set "isLaptop=false"
+for /f "delims=" %%i in ('powershell -NoProfile -Command ^
+    "Get-CimInstance -ClassName Win32_SystemEnclosure | ForEach-Object { $_.ChassisTypes }"') do (
+    if "%%i"=="8"  set "isLaptop=true"
+    if "%%i"=="9"  set "isLaptop=true"
+    if "%%i"=="10" set "isLaptop=true"
+    if "%%i"=="14" set "isLaptop=true"
+    if "%%i"=="30" set "isLaptop=true"
+)
 
+if "%checkLaptop%"=="False" (
+    echo %cGreen%This is a desktop PC. Applying CPU Performance Tuning by Kizzimo...%cReset%
+    :: CPU Performance Tuning by Kizzimo
+    : source - https://github.com/AlchemyTweaks/Verified-Tweaks/blob/main/Max%20Pending%20Interrupts%20
+    : Minimizes the number of interrupts waiting, reducing latency.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    : Keeps I/O processing instant, minimizing wait times.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_MAX_PENDING_IO" /t REG_SZ /d "0" /f
+    : Prevents CPU from idling to maintain maximum performance.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_IDLE_POLICY" /t REG_SZ /d "0" /f
+    : Always allows the CPU to boost for better performance.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_BOOST_POLICY" /t REG_SZ /d "2" /f
+    : Allows the CPU to reach maximum frequency.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_MAX_FREQUENCY" /t REG_SZ /d "100" /f
+    : Ensures interrupts are balanced across all CPU cores.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_INTERRUPT_BALANCE_POLICY" /t REG_SZ /d "1" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "MKL_DEBUG_CPU_TYPE" /t REG_SZ /d "10" /f
+    :: I/O Performance Tuning
+    : Immediate completion of I/O requests to minimize latency.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "IO_COMPLETION_POLICY" /t REG_SZ /d "0" /f
+    : Increases the number of simultaneous I/O requests.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "IO_REQUEST_LIMIT" /t REG_SZ /d "1024" /f
+    : No pending I/O for disk operations, reducing read/write latency.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DISK_MAX_PENDING_IO" /t REG_SZ /d "0" /f
+    : Maximize I/O priority for all operations to minimize bottlenecks.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "IO_PRIORITY" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DISK_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "IO_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    :: Power Management and Performance
+    : Disables power throttling, ensuring high performance at all times.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "POWER_THROTTLE_POLICY" /t REG_SZ /d "0" /f
+    : Disables idle timeout to maintain continuous high performance.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "POWER_IDLE_TIMEOUT" /t REG_SZ /d "0" /f
+    : Enforces high-performance power policy, disabling all power-saving features.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_POWER_POLICY" /t REG_SZ /d "1" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DISABLE_DYNAMIC_TICK" /t REG_SZ /d "yes" /f
+    :: Memory and Latency Tuning
+    : Increase memory allocation to allow more data in memory for faster access.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "MEMORY_MAX_ALLOCATION" /t REG_SZ /d "0" /f
+    : Minimizes memory latency, optimizing for faster memory access.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "MEMORY_LATENCY_POLICY" /t REG_SZ /d "0" /f
+    : Enables memory prefetch to speed up data access in memory.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "MEMORY_PREFETCH_POLICY" /t REG_SZ /d "2" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "MEMORY_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DWM_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DWM_COMPOSITOR_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    :: Network and Connectivity Tuning
+    : Increases network buffer size for faster throughput.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_BUFFER_SIZE" /t REG_SZ /d "512" /f
+    : Disables interrupt coalescing for lower network latency.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_INTERRUPT_COALESCING" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    :: Miscellaneous Performance Tuning
+    : Sets the smallest possible timer resolution for the highest responsiveness.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "TIMER_RESOLUTION" /t REG_SZ /d "0" /f
+    : Prioritizes immediate thread scheduling to reduce latency.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "THREAD_SCHEDULER_POLICY" /t REG_SZ /d "0" /f
+    : Minimizes GPU interrupts for faster rendering.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "GPU_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    :: Network Adapter Performance Tuning
+    : Ensures no pending interrupts for network devices.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_ADAPTER_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    : Ensures instant I/O processing for network operations.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_ADAPTER_MAX_PENDING_IO" /t REG_SZ /d "0" /f
+    : Disables interrupt moderation for lower network latency.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_ADAPTER_INTERRUPT_MODERATION" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_ADAPTER_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    :: Storage Device (HDD/SSD) Performance Tuning
+    : Ensures no pending interrupts for storage devices.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "STORAGE_DEVICE_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    : Ensures storage I/O operations are processed immediately.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "STORAGE_DEVICE_MAX_PENDING_IO" /t REG_SZ /d "0" /f
+    : Forces immediate completion of storage I/O tasks.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "STORAGE_DEVICE_COMPLETION_POLICY" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "STORAGE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "STORAGE_DEVICE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    :: USB Device Performance Tuning
+    : No pending interrupts for USB devices.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "USB_DEVICE_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    : Processes USB I/O instantly, reducing latency.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "USB_DEVICE_MAX_PENDING_IO" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "USB_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "USB_DEVICE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    :: PCIe Device Performance Tuning
+    : No pending interrupts for PCIe devices.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "PCIE_DEVICE_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    : Ensures PCIe I/O operations are processed immediately.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "PCIE_DEVICE_MAX_PENDING_IO" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "PCIE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "PCIE_DEVICE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    :: GPU Performance Tuning
+    : Reduces GPU interrupt queue to zero for immediate processing.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "GPU_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    : Ensures compute operations are processed without delay.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "GPU_MAX_PENDING_COMPUTE" /t REG_SZ /d "0" /f
+    : Forces immediate rendering tasks processing.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "GPU_MAX_PENDING_RENDER" /t REG_SZ /d "0" /f
+    :: Audio Device Performance Tuning
+    : Ensures no pending interrupts for sound cards.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "AUDIO_DEVICE_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    : Keeps audio buffer size low to reduce latency in sound processing.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "AUDIO_DEVICE_BUFFER_SIZE" /t REG_SZ /d "512" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "AUDIO_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "AUDIO_DEVICE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    :: General Device Tuning
+    : Generic setting to ensure no pending interrupts for all devices.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DEVICE_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+    : Ensures immediate I/O operations across all devices.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DEVICE_MAX_PENDING_IO" /t REG_SZ /d "0" /f
+    : Forces devices to complete tasks instantly.
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DEVICE_COMPLETION_POLICY" /t REG_SZ /d "0" /f
+    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DEVICE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
+) else (
+    echo %cRed%This is not a laptop. Skipping CPU Performance Tuning.%cReset%
+)
+
+:: Changing Interrupts behavior for lower latency
+: source - https://youtu.be/Gazv0q3njYU
+reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "InterruptSteeringDisabled" /t REG_DWORD /d "1" /f
+
+:: Mouse & Keyboard Tweaks
 
 :: These settings disable Enhance Pointer Precision, which increases pointer speed with mouse speed
 :: This can be useful generally, but it causes cursor issues in games
@@ -202,7 +331,7 @@ reg.exe add "HKLM\SYSTEM\ControlSet001\Control\GraphicsDrivers\Scheduler" /v "En
 :: By default, Windows uses network throttling to limit non-multimedia traffic to 10 packets per millisecond (about 100 Mb/s).
 :: This is to prioritize CPU access for multimedia applications, as processing network packets can be resource-intensive.
 :: However, it's recommended to disable this setting, especially with gigabit networks, to avoid unnecessary interference.
-: source - https://www.youtube.com/watch?v=EmdosMT5TtA
+: source - https://youtu.be/EmdosMT5TtA
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d "4294967295" /f
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NoLazyMode" /t REG_DWORD /d "1" /f
 
@@ -210,7 +339,7 @@ reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\System
 
 :: LazyMode is a software flag that allows the system to skip some hardware events when CPU load is low.
 :: Disabling it can use more resources for event processing, so we set the timer to a minimum of 1ms (10000ms).
-: source - https://www.youtube.com/watch?v=FxpRL7wheGc
+: source - https://youtu.be/FxpRL7wheGc
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "LazyModeTimeout" /t REG_DWORD /d "25000" /f
 reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\MMCSS" /v "Start" /t REG_DWORD /d "2" /f
 
@@ -242,7 +371,7 @@ reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "Thr
 reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" /v "ThreadPriority" /t REG_DWORD /d "31" /f
 
 :: Set Priority For Programs Instead Of Background Services
-: source - https://www.youtube.com/watch?v=bqDMG1ZS-Yw
+: source - https://youtu.be/bqDMG1ZS-Yw
 reg.exe add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 0x00000024 /f
 : source -
 reg.exe add "HKLM\SYSTEM\ControlSet001\Control\PriorityControl" /v IRQ8Priority /t REG_DWORD /d 1 /f
@@ -251,15 +380,8 @@ reg.exe add "HKLM\SYSTEM\ControlSet001\Control\PriorityControl" /v IRQ16Priority
 :: Boot System & Software without limits
 reg.exe add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize" /v "Startupdelayinmsec" /t REG_DWORD /d "0" /f
 
-:: Disable DistributeTimers
-@REM reg.exe delete "HKLM\SYSTEM\ControlSet001\Control\Session Manager\kernel" /v "DistributeTimers" /f
-
-:: Disable Kernel Mitigations
-@REM call :setReg "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" "MitigationOptions" "222222222222222222222222222222222222222222222222" REG_BINARY
-
 :: Disable Automatic maintenance
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f
-
 
 :: Speed up start time
 reg.exe add "HKCU\AppEvents\Schemes" /f
@@ -295,7 +417,7 @@ reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Manage
 reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d "1" /f
 
 :: DirectX Tweaks
-:: source - https://www.youtube.com/watch?v=itTcqcJxtbo
+:: source - https://youtu.be/itTcqcJxtbo
 reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_ENABLE_UNSAFE_COMMAND_BUFFER_REUSE" /t REG_DWORD /d "1" /f
 reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_ENABLE_RUNTIME_DRIVER_OPTIMIZATIONS" /t REG_DWORD /d "1" /f
 reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_RESOURCE_ALIGNMENT" /t REG_DWORD /d "1" /f
@@ -312,8 +434,8 @@ reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_MAP_HEAP_ALLOCATIONS" /t
 reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_RESIDENCY_MANAGEMENT_ENABLED" /t REG_DWORD /d "1" /f
 
 :: Serialize Timer Expiration mechanism, officially documented in Windows Internals 7th Edition Part 2
-:: source - https://www.youtube.com/watch?v=wil-09_5H0M
-call :setReg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" "SerializeTimerExpiration" "1" "REG_DWORD"
+:: source - https://youtu.be/wil-09_5H0M
+reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "SerializeTimerExpiration" /t REG_DWORD /d "1" /f
 
 goto customGPUTweaks
 
@@ -363,7 +485,7 @@ if !ramSize! == 6 (
 )
 
 if defined svcHostThreshold (
-    call :setReg "HKLM\SYSTEM\ControlSet001\Control" "SvcHostSplitThresholdInKB" "!svcHostThreshold!" REG_DWORD
+    reg.exe add "HKLM\SYSTEM\ControlSet001\Control" /v "SvcHostSplitThresholdInKB" /t REG_DWORD /d "!svcHostThreshold!" /f
     echo %colorGreen%Successfully applied tweak for !ramSizeText! RAM.%colorReset%
 ) else (
     echo %colorRed%Invalid selection.%colorReset%
@@ -396,7 +518,7 @@ reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\NVTweak" /v 
 goto main
 
 :amd
-: source - https://www.youtube.com/watch?v=nuUV2RoPOWc
+: source - https://youtu.be/nuUV2RoPOWc
 reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "AllowSnapshot" /t REG_DWORD /d "0" /f
 reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "AllowSubscription" /t REG_DWORD /d "0" /f
 reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "AllowRSOverlay" /t REG_SZ /d "false" /f
@@ -478,6 +600,22 @@ if %errorlevel%==1 (
     cleanmgr /sagerun:65535
 )
 
+:: Install and Launch PC Manager
+echo.
+echo %cGrey%Would you like to install and launch PC Manager? (Official Microsoft Utility from Store)%cReset%
+choice /C 12 /N /M "[1] Yes or [2] No : "
+if %errorlevel%==1 (
+    echo %cGrey%Installing PC Manager...%cReset%
+    winget install Microsoft.PCManager --accept-package-agreements --accept-source-agreements
+    if !errorlevel! equ 0 (
+        echo %cGreen%Successfully installed PC Manager.%cReset%
+        echo %cGrey%Launching PC Manager...%cReset%
+    ) else (
+        echo %cRed%Failed to install PC Manager. Please try manually.%cReset%
+        pause
+    )
+)
+
 goto main
 
 :launchWinUtil
@@ -493,36 +631,38 @@ echo %cGrey%and also dont forget to download revert version for your selected tw
 pause
 goto main
 
-:wingetInstall 
+:wingetInstall
 title Simplify11: Install apps
 cls
+
 :: Define packages for winget installation
-set "packages[1]=Microsoft.VisualStudioCode"
-set "packages[2]=Python"
-set "packages[3]=OpenJS.NodeJS"
-set "packages[4]=Anysphere.Cursor"
-set "packages[5]=Git.Git"
-set "packages[6]=GitHub.GitHubDesktop"
-set "packages[7]=TheBrowserCompany.Arc"
-set "packages[8]=Alex313031.Thorium"
-set "packages[9]=Zen-Team.Zen-Browser"
-set "packages[10]=Yandex.Browser"
-set "packages[11]=Microsoft.PowerToys"
-set "packages[12]=M2Team.NanaZip"
-set "packages[13]=agalwood.motrix"
-set "packages[14]=MartiCliment.UniGetUI"
-set "packages[15]=TechPowerUp.NVCleanstall"
-set "packages[16]=NVIDIA.Broadcast"
-set "packages[17]=RadolynLabs.AyuGramDesktop"
-set "packages[18]=Vencord.Vesktop"
-set "packages[19]=lencx.ChatGPT"
-set "packages[20]=Doist.Todoist"
-set "packages[21]=Valve.Steam"
-set "packages[22]=EpicGames.EpicGamesLauncher"
-set "packages[23]=RustemMussabekov.Raindrop"
-set "packages[24]=Microsoft.DirectX"
-set "packages[25]=Microsoft.DotNet.Runtime.8"
-set "packages[26]=Microsoft.PCManager"
+set "pkg[1]=Microsoft.VisualStudioCode"
+set "pkg[2]=Python"
+set "pkg[3]=OpenJS.NodeJS"
+set "pkg[4]=Anysphere.Cursor"
+set "pkg[5]=Git.Git"
+set "pkg[6]=GitHub.GitHubDesktop"
+set "pkg[7]=TheBrowserCompany.Arc"
+set "pkg[8]=Alex313031.Thorium"
+set "pkg[9]=Zen-Team.Zen-Browser"
+set "pkg[10]=Yandex.Browser"
+set "pkg[11]=Microsoft.PowerToys"
+set "pkg[12]=M2Team.NanaZip"
+set "pkg[13]=agalwood.motrix"
+set "pkg[14]=MartiCliment.UniGetUI"
+set "pkg[15]=TechPowerUp.NVCleanstall"
+set "pkg[16]=NVIDIA.Broadcast"
+set "pkg[17]=RadolynLabs.AyuGramDesktop"
+set "pkg[18]=Vencord.Vesktop"
+set "pkg[19]=lencx.ChatGPT"
+set "pkg[20]=Doist.Todoist"
+set "pkg[21]=RustemMussabekov.Raindrop"
+set "pkg[22]=Valve.Steam"
+set "pkg[23]=EpicGames.EpicGamesLauncher"
+set "pkg[24]=Microsoft.DirectX"
+set "pkg[25]=Microsoft.DotNet.Runtime.8"
+set "pkg[26]=Microsoft.PCManager"
+set "pkg[27]=Microsoft.EdgeWebView2Runtime"
 
 echo %cMauve% +--------------------------------------------------------+%cReset%
 echo %cMauve%  %cGreen%[0] Search for any program                              %cMauve% %cReset%
@@ -546,70 +686,59 @@ echo %cMauve%  %cGreen%Gaming:                                                %c
 echo %cMauve%  %cGrey%[22] Steam              [23] Epic Games Store          %cMauve% %cReset%
 echo %cMauve%  %cGreen%Microsoft Stuff:                                       %cMauve% %cReset%
 echo %cMauve%  %cGrey%[24] DirectX            [25] .NET 8.0                  %cMauve% %cReset%
-echo %cMauve%  %cGrey%[26] PC Manager                                        %cMauve% %cReset%
+echo %cMauve%  %cGrey%[26] PC Manager         [27] Edge WebView              %cMauve% %cReset%
 echo.
-echo %cMauve%  %cGrey%[27] Back to Main Menu                                 %cMauve% %cReset%
+echo %cMauve%  %cGrey%[28] Back to Main Menu                                 %cMauve% %cReset%
 echo %cMauve% +--------------------------------------------------------+%cReset%
 
-set /p choice="%cSapphire%Enter your choices (space-separated numbers, e.g., '1 2'): %cReset%"
-
-:: Create a temporary file to store the choices
-echo %choice% > "%temp%\choices.txt"
+set /p choice="%cSapphire%Enter your choices (space-separated numbers '1 2'): %cReset%"
 
 :: Process each number in the input sequentially
-for /f "tokens=* delims=" %%n in ('type "%temp%\choices.txt"') do (
-    for %%a in (%%n) do (
-        if "%%a"=="0" (
-            del "%temp%\choices.txt" 2>nul
-            goto searchProgram
-        ) else if "%%a"=="27" (
-            del "%temp%\choices.txt" 2>nul
-            goto main
-        ) else (
-            :: Check if it's a valid number between 1 and 26
-            set /a "num=%%a" 2>nul
-            if !num! geq 1 if !num! leq 26 (
-                if defined packages[%%a] (
-                    echo.
-                    echo %cGrey%Installing !packages[%%a]!...%cReset%
-                    winget install --id !packages[%%a]! --accept-package-agreements --accept-source-agreements
-                    if !errorlevel! equ 0 (
-                        echo %cGreen%Successfully installed !packages[%%a]!%cReset%
-                    ) else (
-                        echo %cRed%Failed to install !packages[%%a]!. Error code: !errorlevel!%cReset%
-                        pause
-                    )
+for %%a in (%choice%) do (
+    if %%a==0 (
+        goto searchProgram
+    ) else if %%a==28 (
+        goto main
+    ) else (
+        :: Check if it's a valid number
+        set /a "num=%%a" 2>nul
+        if !num! geq 1 if !num! leq 27 (
+            if defined pkg[%%a] (
+                echo.
+                echo %cGrey%Installing !pkg[%%a]!...%cReset%
+                winget install --id !pkg[%%a]! --accept-package-agreements --accept-source-agreements
+                if !errorlevel! equ 0 (
+                    echo %cGreen%Successfully installed !pkg[%%a]!%cReset%
                 ) else (
-                    echo %cRed%No package defined for choice %%a%cReset%
-                    timeout /t 2 >nul
+                    echo %cRed%Failed to install !pkg[%%a]!. Error code: !errorlevel!%cReset%
+                    pause
                 )
             ) else (
-                echo %cRed%Invalid choice: %%a%cReset%
-                timeout /t 2 >nul
+                echo %cRed%No package defined for choice %%a%cReset%
+                pause
             )
+        ) else (
+            echo %cRed%Invalid choice: %%a%cReset%
+            pause
         )
     )
 )
 
-:: Clean up temporary file
-del "%temp%\choices.txt" 2>nul
-
-pause
 goto wingetInstall
 
 :searchProgram
 cls
-echo %cGrey%Enter Program name to search (or 'back' to return):%cReset%
+echo %cGrey%Enter Program name to search (or 'b' to return):%cReset%
 set /p "searchTerm="
-if /i "%searchTerm%"=="back" goto wingetInstall
+if /i "%searchTerm%"=="b" goto wingetInstall
 if /i "%searchTerm%"=="" goto searchProgram
 
 echo %cGrey%Searching for "%searchTerm%"...%cReset%
 winget search "%searchTerm%"
 echo.
-echo %cGrey%Enter the exact package ID to install (or 'back' to return):%cReset%
+echo %cGrey%Enter the exact package ID to install (or 'b' to return):%cReset%
 set /p "packageId="
-if /i "%packageId%"=="back" goto wingetInstall
+if /i "%packageId%"=="b" goto wingetInstall
 if /i "%packageId%"=="" goto searchProgram
 
 call :installPackage "%packageId%"

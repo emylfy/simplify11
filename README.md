@@ -25,7 +25,7 @@
 	<a href="#-installation">Installation</a> •
 	<a href="#-quick-start">Usage</a> •
 	<a href="#-cool-stuff">Cool Stuff</a> •
-	<a href="#-contributing">Contributing</a>
+	<a href="#-credits">Credits</a>
 </p>
 
 </div>
@@ -86,17 +86,8 @@ iwr "https://dub.sh/s11install" | iex
 **Supports package search and installation by using Winget**
 **But also contains a preset of apps such as:**
 
-- **Development Tools**
-  - Visual Studio Code, Python, Git, Node.js
+<img src="src/menu.png" width="60%">
 
-- **Modern Browsers**
-  - Arc, Thorium, Zen Browser
-
-- **Essential Utilities**
-  - PowerToys, NanaZip, PC Manager
-
-- **And More...**
-  - Gaming, Productivity & Social apps
 </details>
 
 ### Security Note
@@ -129,32 +120,11 @@ iwr "https://dub.sh/s11install" | iex
 <details>
 <summary>Customization</summary>
 
-- **Rectify11**
   - [Rectify11 Installer](https://github.com/Rectify11/Installer) - Modern UI redesign for Windows 11
-
-- **Customizable Windows ISO**
-  - [Simplify11 ISO Integration Guide](https://gist.github.com/emylfy/d53ba22c2c8c00fe3f98887290d763e5) - Automated installation with autounattend.xml
-
+  - [Autounattend.xml](https://gist.github.com/emylfy/d53ba22c2c8c00fe3f98887290d763e5) - Customizable Answer file to perform automated windows installation
 </details>
 
-## 🤝 Contributing
-
-<div align="center">
-
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](http://makeapullrequest.com)
-[![Contributors](https://img.shields.io/github/contributors/emylfy/simplify11?style=for-the-badge&logo=github)](https://github.com/emylfy/simplify11/graphs/contributors)
-
-</div>
-
-Contributions make the open source community amazing! Any contributions you make are **greatly appreciated**.
-
-1. Fork the Project
-2. Create your Feature Branch
-3. Commit your Changes
-4. Push to the Branch
-5. Open a Pull Request
-
-## 🌟 Acknowledgments
+## 🌟 Credits
 
 <div align="center">
 
@@ -179,4 +149,5 @@ Contributions make the open source community amazing! Any contributions you make
 
 ### ⭐ Love this project? Show your support by giving it a star!
 
+#### ✨ If you have specific recommendations on how to improve or change this guide or any suggestions and wishes, you can write everything in [**Issues**](https://github.com/emylfy/simplify11/issues/).
 </div>
