@@ -185,7 +185,7 @@ if "%isLaptop%"=="true" (
     echo %cGrey%Do you want to apply tweaks that will use maximum power and can drain the battery faster?%cReset%
     choice /C YN /N /M "[Y] Yes [N] No: "
     if errorlevel 2 (
-        call :skipPowerIntensiveTweaks
+        call :mainTweaks
     )
 )
 
@@ -300,8 +300,9 @@ call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "D
 : Forces devices to complete tasks instantly.
 call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DEVICE_COMPLETION_POLICY" "REG_SZ" "0"
 call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DEVICE_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+goto :mainTweaks
 
-:skipPowerIntensiveTweaks
+:mainTweaks
 :: Changing Interrupts behavior for lower latency
 : source - https://youtu.be/Gazv0q3njYU
 call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" "InterruptSteeringDisabled" "REG_DWORD" "1"
