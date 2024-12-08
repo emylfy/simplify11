@@ -46,9 +46,9 @@ choice /C 12 /N /M "[1] Yes or [2] No : "
 if %errorlevel%==2 goto main
 
 echo %cGrey%Configuring system restore settings...%cReset%
-reg.exe add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\SystemRestore" /v "SystemRestorePointCreationFrequency" /t REG_DWORD /d "0" /f >nul 2>&1
+call :reg "HKLM\Software\Microsoft\Windows NT\CurrentVersion\SystemRestore" "SystemRestorePointCreationFrequency" "REG_DWORD" "0" >nul 2>&1
 if errorlevel 1 (
-    echo %cRed%Failed to configure system restore settings. Continuing anyway...%cReset%
+    echo %cRed%Failed to create restore point. Please ensure System Protection is enabled.%cReset%
     timeout /t 2 >nul
 )
 
@@ -79,7 +79,7 @@ echo %cMauve% '%cGrey% [3] WinUtil - Install Programs, Tweaks and Fixes       %c
 echo %cMauve% '%cGrey% [4] Privacy.Sexy - Tool to enforce privacy in clicks   %cMauve%'%cReset%
 echo %cMauve% '%cGrey% [5] Winget - Install programs without browser          %cMauve%'%cReset%
 echo %cMauve% '%cGrey% [6] Check other cool stuff                             %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [7] Exit                                               %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [7] Check Laptop Manufacturers                         %cMauve%'%cReset%
 echo %cMauve% +--------------------------------------------------------+%cReset%
 if "%hasRestorePoint%"=="1" (
     choice /C 01234567 /N /M " "
@@ -139,7 +139,7 @@ call :coolStuff
 goto main
 
 :s7
-exit
+goto :laptopMenu
 
 :applyTweaks
 
@@ -163,7 +163,7 @@ if errorlevel 2 (
     :: Disable NTFS last access time updates
     fsutil behavior set disablelastaccess 1
     :: Disable creation of MS-DOS short file names
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsDisable8dot3NameCreation" /t REG_DWORD /d 1 /f
+    call :reg "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" "NtfsDisable8dot3NameCreation" "REG_DWORD" 1
 )
 
 :checkLaptop
@@ -177,154 +177,163 @@ for /f "delims=" %%i in ('powershell -NoProfile -Command ^
     if "%%i"=="30" set "isLaptop=true"
 )
 
-if "%checkLaptop%"=="False" (
-    echo %cGreen%This is a desktop PC. Applying CPU Performance Tuning by Kizzimo...%cReset%
-    :: CPU Performance Tuning by Kizzimo
-    : source - https://github.com/AlchemyTweaks/Verified-Tweaks/blob/main/Max%20Pending%20Interrupts%20
-    : Minimizes the number of interrupts waiting, reducing latency.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    : Keeps I/O processing instant, minimizing wait times.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_MAX_PENDING_IO" /t REG_SZ /d "0" /f
-    : Prevents CPU from idling to maintain maximum performance.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_IDLE_POLICY" /t REG_SZ /d "0" /f
-    : Always allows the CPU to boost for better performance.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_BOOST_POLICY" /t REG_SZ /d "2" /f
-    : Allows the CPU to reach maximum frequency.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_MAX_FREQUENCY" /t REG_SZ /d "100" /f
-    : Ensures interrupts are balanced across all CPU cores.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_INTERRUPT_BALANCE_POLICY" /t REG_SZ /d "1" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "MKL_DEBUG_CPU_TYPE" /t REG_SZ /d "10" /f
-    :: I/O Performance Tuning
-    : Immediate completion of I/O requests to minimize latency.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "IO_COMPLETION_POLICY" /t REG_SZ /d "0" /f
-    : Increases the number of simultaneous I/O requests.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "IO_REQUEST_LIMIT" /t REG_SZ /d "1024" /f
-    : No pending I/O for disk operations, reducing read/write latency.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DISK_MAX_PENDING_IO" /t REG_SZ /d "0" /f
-    : Maximize I/O priority for all operations to minimize bottlenecks.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "IO_PRIORITY" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DISK_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "IO_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    :: Power Management and Performance
-    : Disables power throttling, ensuring high performance at all times.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "POWER_THROTTLE_POLICY" /t REG_SZ /d "0" /f
-    : Disables idle timeout to maintain continuous high performance.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "POWER_IDLE_TIMEOUT" /t REG_SZ /d "0" /f
-    : Enforces high-performance power policy, disabling all power-saving features.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "CPU_POWER_POLICY" /t REG_SZ /d "1" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DISABLE_DYNAMIC_TICK" /t REG_SZ /d "yes" /f
-    :: Memory and Latency Tuning
-    : Increase memory allocation to allow more data in memory for faster access.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "MEMORY_MAX_ALLOCATION" /t REG_SZ /d "0" /f
-    : Minimizes memory latency, optimizing for faster memory access.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "MEMORY_LATENCY_POLICY" /t REG_SZ /d "0" /f
-    : Enables memory prefetch to speed up data access in memory.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "MEMORY_PREFETCH_POLICY" /t REG_SZ /d "2" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "MEMORY_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DWM_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DWM_COMPOSITOR_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    :: Network and Connectivity Tuning
-    : Increases network buffer size for faster throughput.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_BUFFER_SIZE" /t REG_SZ /d "512" /f
-    : Disables interrupt coalescing for lower network latency.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_INTERRUPT_COALESCING" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    :: Miscellaneous Performance Tuning
-    : Sets the smallest possible timer resolution for the highest responsiveness.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "TIMER_RESOLUTION" /t REG_SZ /d "0" /f
-    : Prioritizes immediate thread scheduling to reduce latency.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "THREAD_SCHEDULER_POLICY" /t REG_SZ /d "0" /f
-    : Minimizes GPU interrupts for faster rendering.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "GPU_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    :: Network Adapter Performance Tuning
-    : Ensures no pending interrupts for network devices.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_ADAPTER_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    : Ensures instant I/O processing for network operations.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_ADAPTER_MAX_PENDING_IO" /t REG_SZ /d "0" /f
-    : Disables interrupt moderation for lower network latency.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_ADAPTER_INTERRUPT_MODERATION" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "NETWORK_ADAPTER_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    :: Storage Device (HDD/SSD) Performance Tuning
-    : Ensures no pending interrupts for storage devices.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "STORAGE_DEVICE_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    : Ensures storage I/O operations are processed immediately.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "STORAGE_DEVICE_MAX_PENDING_IO" /t REG_SZ /d "0" /f
-    : Forces immediate completion of storage I/O tasks.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "STORAGE_DEVICE_COMPLETION_POLICY" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "STORAGE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "STORAGE_DEVICE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    :: USB Device Performance Tuning
-    : No pending interrupts for USB devices.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "USB_DEVICE_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    : Processes USB I/O instantly, reducing latency.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "USB_DEVICE_MAX_PENDING_IO" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "USB_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "USB_DEVICE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    :: PCIe Device Performance Tuning
-    : No pending interrupts for PCIe devices.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "PCIE_DEVICE_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    : Ensures PCIe I/O operations are processed immediately.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "PCIE_DEVICE_MAX_PENDING_IO" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "PCIE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "PCIE_DEVICE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    :: GPU Performance Tuning
-    : Reduces GPU interrupt queue to zero for immediate processing.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "GPU_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    : Ensures compute operations are processed without delay.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "GPU_MAX_PENDING_COMPUTE" /t REG_SZ /d "0" /f
-    : Forces immediate rendering tasks processing.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "GPU_MAX_PENDING_RENDER" /t REG_SZ /d "0" /f
-    :: Audio Device Performance Tuning
-    : Ensures no pending interrupts for sound cards.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "AUDIO_DEVICE_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    : Keeps audio buffer size low to reduce latency in sound processing.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "AUDIO_DEVICE_BUFFER_SIZE" /t REG_SZ /d "512" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "AUDIO_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "AUDIO_DEVICE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    :: General Device Tuning
-    : Generic setting to ensure no pending interrupts for all devices.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DEVICE_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-    : Ensures immediate I/O operations across all devices.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DEVICE_MAX_PENDING_IO" /t REG_SZ /d "0" /f
-    : Forces devices to complete tasks instantly.
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DEVICE_COMPLETION_POLICY" /t REG_SZ /d "0" /f
-    reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DEVICE_MAX_PENDING_INTERRUPTS" /t REG_SZ /d "0" /f
-) else (
-    echo %cRed%This is not a laptop. Skipping CPU Performance Tuning.%cReset%
+if "%isLaptop%"=="false" (
+    goto applyPowerIntensiveTweaks
 )
 
+if "%isLaptop%"=="true" (
+    echo %cGrey%Do you want to apply tweaks that will use maximum power and can drain the battery faster?%cReset%
+    choice /C YN /N /M "[Y] Yes [N] No: "
+    if errorlevel 2 (
+        goto skipPowerIntensiveTweaks
+    )
+)
+
+:applyPowerIntensiveTweaks
+ :: CPU Performance Tuning by Kizzimo
+: source - https://github.com/AlchemyTweaks/Verified-Tweaks/blob/main/Max%20Pending%20Interrupts%20
+: Minimizes the number of interrupts waiting, reducing latency.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "CPU_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+: Keeps I/O processing instant, minimizing wait times.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "CPU_MAX_PENDING_IO" "REG_SZ" "0"
+: Prevents CPU from idling to maintain maximum performance.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "CPU_IDLE_POLICY" "REG_SZ" "0"
+: Always allows the CPU to boost for better performance.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "CPU_BOOST_POLICY" "REG_SZ" "2"
+: Allows the CPU to reach maximum frequency.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "CPU_MAX_FREQUENCY" "REG_SZ" "100"
+: Ensures interrupts are balanced across all CPU cores.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "CPU_INTERRUPT_BALANCE_POLICY" "REG_SZ" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "MKL_DEBUG_CPU_TYPE" "REG_SZ" "10"
+:: I/O Performance Tuning
+: Immediate completion of I/O requests to minimize latency.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "IO_COMPLETION_POLICY" "REG_SZ" "0"
+: Increases the number of simultaneous I/O requests.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "IO_REQUEST_LIMIT" "REG_SZ" "1024"
+: No pending I/O for disk operations, reducing read/write latency.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DISK_MAX_PENDING_IO" "REG_SZ" "0"
+: Maximize I/O priority for all operations to minimize bottlenecks.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "IO_PRIORITY" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DISK_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "IO_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+:: Power Management and Performance
+: Disables power throttling, ensuring high performance at all times.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "POWER_THROTTLE_POLICY" "REG_SZ" "0"
+: Disables idle timeout to maintain continuous high performance.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "POWER_IDLE_TIMEOUT" "REG_SZ" "0"
+: Enforces high-performance power policy, disabling all power-saving features.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "CPU_POWER_POLICY" "REG_SZ" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DISABLE_DYNAMIC_TICK" "REG_SZ" "yes"
+:: Memory and Latency Tuning
+: Increase memory allocation to allow more data in memory for faster access.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "MEMORY_MAX_ALLOCATION" "REG_SZ" "0"
+: Minimizes memory latency, optimizing for faster memory access.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "MEMORY_LATENCY_POLICY" "REG_SZ" "0"
+: Enables memory prefetch to speed up data access in memory.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "MEMORY_PREFETCH_POLICY" "REG_SZ" "2"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "MEMORY_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DWM_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DWM_COMPOSITOR_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+:: Network and Connectivity Tuning
+: Increases network buffer size for faster throughput.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "NETWORK_BUFFER_SIZE" "REG_SZ" "512"
+: Disables interrupt coalescing for lower network latency.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "NETWORK_INTERRUPT_COALESCING" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "NETWORK_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+:: Miscellaneous Performance Tuning
+: Sets the smallest possible timer resolution for the highest responsiveness.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "TIMER_RESOLUTION" "REG_SZ" "0"
+: Prioritizes immediate thread scheduling to reduce latency.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "THREAD_SCHEDULER_POLICY" "REG_SZ" "0"
+: Minimizes GPU interrupts for faster rendering.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "GPU_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+:: Network Adapter Performance Tuning
+: Ensures no pending interrupts for network devices.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "NETWORK_ADAPTER_PENDING_INTERRUPTS" "REG_SZ" "0"
+: Ensures instant I/O processing for network operations.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "NETWORK_ADAPTER_MAX_PENDING_IO" "REG_SZ" "0"
+: Disables interrupt moderation for lower network latency.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "NETWORK_ADAPTER_INTERRUPT_MODERATION" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "NETWORK_ADAPTER_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+:: Storage Device (HDD/SSD) Performance Tuning
+: Ensures no pending interrupts for storage devices.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "STORAGE_DEVICE_PENDING_INTERRUPTS" "REG_SZ" "0"
+: Ensures storage I/O operations are processed immediately.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "STORAGE_DEVICE_MAX_PENDING_IO" "REG_SZ" "0"
+: Forces immediate completion of storage I/O tasks.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "STORAGE_DEVICE_COMPLETION_POLICY" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "STORAGE_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "STORAGE_DEVICE_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+:: USB Device Performance Tuning
+: No pending interrupts for USB devices.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "USB_DEVICE_PENDING_INTERRUPTS" "REG_SZ" "0"
+: Processes USB I/O instantly, reducing latency.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "USB_DEVICE_MAX_PENDING_IO" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "USB_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "USB_DEVICE_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+:: PCIe Device Performance Tuning
+: No pending interrupts for PCIe devices.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "PCIE_DEVICE_PENDING_INTERRUPTS" "REG_SZ" "0"
+: Ensures PCIe I/O operations are processed immediately.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "PCIE_DEVICE_MAX_PENDING_IO" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "PCIE_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "PCIE_DEVICE_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+:: GPU Performance Tuning
+: Reduces GPU interrupt queue to zero for immediate processing.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "GPU_PENDING_INTERRUPTS" "REG_SZ" "0"
+: Ensures compute operations are processed without delay.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "GPU_MAX_PENDING_COMPUTE" "REG_SZ" "0"
+: Forces immediate rendering tasks processing.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "GPU_MAX_PENDING_RENDER" "REG_SZ" "0"
+:: Audio Device Performance Tuning
+: Ensures no pending interrupts for sound cards.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "AUDIO_DEVICE_PENDING_INTERRUPTS" "REG_SZ" "0"
+: Keeps audio buffer size low to reduce latency in sound processing.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "AUDIO_DEVICE_BUFFER_SIZE" "REG_SZ" "512"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "AUDIO_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "AUDIO_DEVICE_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+:: General Device Tuning
+: Generic setting to ensure no pending interrupts for all devices.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DEVICE_PENDING_INTERRUPTS" "REG_SZ" "0"
+: Ensures immediate I/O operations across all devices.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DEVICE_MAX_PENDING_IO" "REG_SZ" "0"
+: Forces devices to complete tasks instantly.
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DEVICE_COMPLETION_POLICY" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DEVICE_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
+
+:skipPowerIntensiveTweaks
 :: Changing Interrupts behavior for lower latency
 : source - https://youtu.be/Gazv0q3njYU
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "InterruptSteeringDisabled" /t REG_DWORD /d "1" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" "InterruptSteeringDisabled" "REG_DWORD" "1"
 
 :: Mouse & Keyboard Tweaks
 
 :: These settings disable Enhance Pointer Precision, which increases pointer speed with mouse speed
 :: This can be useful generally, but it causes cursor issues in games
 :: It's recommended to disable this for gaming
-reg.exe add "HKCU\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f
-reg.exe add "HKCU\Control Panel\Mouse" /v "MouseThreshold1" /t REG_SZ /d "0" /f
-reg.exe add "HKCU\Control Panel\Mouse" /v "MouseThreshold2" /t REG_SZ /d "0" /f
+call :reg "HKCU\Control Panel\Mouse" "MouseSpeed" "REG_SZ" "0"
+call :reg "HKCU\Control Panel\Mouse" "MouseThreshold1" "REG_SZ" "0"
+call :reg "HKCU\Control Panel\Mouse" "MouseThreshold2" "REG_SZ" "0"
 
 :: The MouseDataQueueSize and KeyboardDataQueueSize parameters set the number of events stored in the mouse and keyboard driver buffers
 :: A smaller value means faster processing of new information
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /t REG_DWORD /d "20" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /t REG_DWORD /d "20" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" "MouseDataQueueSize" "REG_DWORD" "20"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" "KeyboardDataQueueSize" "REG_DWORD" "20"
 
 :: Disable StickyKeys
 :: These settings disable the annoying Sticky Keys feature when Shift is pressed repeatedly, and the delay in character input.
 
-reg.exe add "HKCU\Control Panel\Accessibility" /v "StickyKeys" /t REG_SZ /d "506" /f
-reg.exe add "HKCU\Control Panel\Accessibility\ToggleKeys" /v "Flags" /t REG_SZ /d "58" /f
-reg.exe add "HKCU\Control Panel\Accessibility\Keyboard Response" /v "DelayBeforeAcceptance" /t REG_SZ /d "0" /f
-reg.exe add "HKCU\Control Panel\Accessibility\Keyboard Response" /v "AutoRepeatRate" /t REG_SZ /d "0" /f
-reg.exe add "HKCU\Control Panel\Accessibility\Keyboard Response" /v "AutoRepeatDelay" /t REG_SZ /d "0" /f
-reg.exe add "HKCU\Control Panel\Accessibility\Keyboard Response" /v "Flags" /t REG_SZ /d "122" /f
+call :reg "HKCU\Control Panel\Accessibility" "StickyKeys" "REG_SZ" "506"
+call :reg "HKCU\Control Panel\Accessibility\ToggleKeys" "Flags" "REG_SZ" "58"
+call :reg "HKCU\Control Panel\Accessibility\Keyboard Response" "DelayBeforeAcceptance" "REG_SZ" "0"
+call :reg "HKCU\Control Panel\Accessibility\Keyboard Response" "AutoRepeatRate" "REG_SZ" "0"
+call :reg "HKCU\Control Panel\Accessibility\Keyboard Response" "AutoRepeatDelay" "REG_SZ" "0"
+call :reg "HKCU\Control Panel\Accessibility\Keyboard Response" "Flags" "REG_SZ" "122"
 
 :: GPU Tweaks
 :: The HwSchMode parameter optimizes hardware-level computation scheduling (Hardware Accelerated GPU Scheduling), reducing latency on lower-end GPUs.
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t REG_DWORD /d "2" /f
-reg.exe add "HKLM\SYSTEM\ControlSet001\Control\GraphicsDrivers\Scheduler" /v "EnablePreemption" /t REG_DWORD /d "0" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" "HwSchMode" "REG_DWORD" "2"
+call :reg "HKLM\SYSTEM\ControlSet001\Control\GraphicsDrivers\Scheduler" "EnablePreemption" "REG_DWORD" "0"
 
 :: Network Tweaks
 
@@ -332,28 +341,28 @@ reg.exe add "HKLM\SYSTEM\ControlSet001\Control\GraphicsDrivers\Scheduler" /v "En
 :: This is to prioritize CPU access for multimedia applications, as processing network packets can be resource-intensive.
 :: However, it's recommended to disable this setting, especially with gigabit networks, to avoid unnecessary interference.
 : source - https://youtu.be/EmdosMT5TtA
-reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d "4294967295" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NoLazyMode" /t REG_DWORD /d "1" /f
+call :reg "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "NetworkThrottlingIndex" "REG_DWORD" "4294967295"
+call :reg "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "NoLazyMode" "REG_DWORD" "1"
 
 :: CPU Tweaks
 
 :: LazyMode is a software flag that allows the system to skip some hardware events when CPU load is low.
 :: Disabling it can use more resources for event processing, so we set the timer to a minimum of 1ms (10000ms).
 : source - https://youtu.be/FxpRL7wheGc
-reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "LazyModeTimeout" /t REG_DWORD /d "25000" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\MMCSS" /v "Start" /t REG_DWORD /d "2" /f
+call :reg "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "LazyModeTimeout" "REG_DWORD" "25000"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Services\MMCSS" "Start" "REG_DWORD" "2"
 
 :: Power Tweaks
 
 :: Power Throttling is a service that slows down background apps to save energy on laptops.
 :: In this case, it's unnecessary, so it's recommended to disable it.
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t REG_DWORD /d "1" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" "PowerThrottlingOff" "REG_DWORD" "1"
 
 : source - https://github.com/ancel1x/Ancels-Performance-Batch
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "PlatformAoAcOverride" /t REG_DWORD /d "0" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "EnergyEstimationEnabled" /t REG_DWORD /d "0" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "EventProcessorEnabled" /t REG_DWORD /d "0" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "CsEnabled" /t REG_DWORD /d "0" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Power" "PlatformAoAcOverride" "REG_DWORD" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Power" "EnergyEstimationEnabled" "REG_DWORD" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Power" "EventProcessorEnabled" "REG_DWORD" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Power" "CsEnabled" "REG_DWORD" "0"
 
 :: Activate Hidden Ultimate Performance Power Plan
 powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee
@@ -364,78 +373,77 @@ powercfg -setactive eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee
 :: Specify priority for services (drivers) to handle interrupts first.
 :: Windows uses IRQL to determine interrupt priority. If an interrupt can be serviced, it starts execution.
 :: Lower priority tasks are queued. This ensures critical services are prioritized for interrupts.
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\DXGKrnl\Parameters" /v "ThreadPriority" /t REG_DWORD /d "15" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\USBHUB3\Parameters" /v "ThreadPriority" /t REG_DWORD /d "15" /f 
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\USBXHCI\Parameters" /v "ThreadPriority" /t REG_DWORD /d "15" /f 
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "ThreadPriority" /t REG_DWORD /d "31" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" /v "ThreadPriority" /t REG_DWORD /d "31" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\services\DXGKrnl\Parameters" "ThreadPriority" "REG_DWORD" "15"
+call :reg "HKLM\SYSTEM\CurrentControlSet\services\USBHUB3\Parameters" "ThreadPriority" "REG_DWORD" "15" 
+call :reg "HKLM\SYSTEM\CurrentControlSet\services\USBXHCI\Parameters" "ThreadPriority" "REG_DWORD" "15" 
+call :reg "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" "ThreadPriority" "REG_DWORD" "31"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" "ThreadPriority" "REG_DWORD" "31"
 
 :: Set Priority For Programs Instead Of Background Services
 : source - https://youtu.be/bqDMG1ZS-Yw
-reg.exe add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 0x00000024 /f
+call :reg "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\PriorityControl" "Win32PrioritySeparation" "REG_DWORD" 0x00000024
 : source -
-reg.exe add "HKLM\SYSTEM\ControlSet001\Control\PriorityControl" /v IRQ8Priority /t REG_DWORD /d 1 /f
-reg.exe add "HKLM\SYSTEM\ControlSet001\Control\PriorityControl" /v IRQ16Priority /t REG_DWORD /d 2 /f
+call :reg "HKLM\SYSTEM\ControlSet001\Control\PriorityControl" IRQ8Priority "REG_DWORD" 1
+call :reg "HKLM\SYSTEM\ControlSet001\Control\PriorityControl" IRQ16Priority "REG_DWORD" 2
 
 :: Boot System & Software without limits
-reg.exe add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize" /v "Startupdelayinmsec" /t REG_DWORD /d "0" /f
+call :reg "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize" "Startupdelayinmsec" "REG_DWORD" "0"
 
 :: Disable Automatic maintenance
-reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f
+call :reg "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" "MaintenanceDisabled" "REG_DWORD" "1"
 
 :: Speed up start time
-reg.exe add "HKCU\AppEvents\Schemes" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "DelayedDesktopSwitchTimeout" /t REG_DWORD /d "0" /f
+call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" "DelayedDesktopSwitchTimeout" "REG_DWORD" "0"
 
 :: Disable ApplicationPreLaunch & Prefetch
 :: The outdated Prefetcher and Superfetch services run in the background, analyzing loaded apps/libraries/services.
 :: They cache repeated data to disk and then to RAM, speeding up app launches.
 :: However, with an SSD, apps load quickly without this, so constant disk caching is unnecessary.
 powershell Disable-MMAgent -ApplicationPreLaunch
-reg.exe add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnablePrefetcher" /t REG_DWORD /d "0" /f
-reg.exe add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "SfTracingState" /t REG_DWORD /d "0" /f
+call :reg "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" "EnablePrefetcher" "REG_DWORD" "0"
+call :reg "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" "SfTracingState" "REG_DWORD" "0"
 
 :: Reducing time of disabling processes and menu
-reg.exe add "HKCU\Control Panel\Desktop" /v  "AutoEndTasks" /t REG_SZ /d "1" /f
-reg.exe add "HKCU\Control Panel\Desktop" /v  "HungAppTimeout" /t REG_SZ /d "1000" /f
-reg.exe add "HKCU\Control Panel\Desktop" /v  "WaitToKillAppTimeout" /t REG_SZ /d "2000" /f
-reg.exe add "HKCU\Control Panel\Desktop" /v  "LowLevelHooksTimeout" /t REG_SZ /d "1000" /f
-reg.exe add "HKCU\Control Panel\Desktop" /v  "MenuShowDelay" /t REG_SZ /d "0" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control" "WaitToKillServiceTimeout" /t REG_SZ /d "2000" /f
+call :reg "HKCU\Control Panel\Desktop"  "AutoEndTasks" "REG_SZ" "1"
+call :reg "HKCU\Control Panel\Desktop"  "HungAppTimeout" "REG_SZ" "1000"
+call :reg "HKCU\Control Panel\Desktop"  "WaitToKillAppTimeout" "REG_SZ" "2000"
+call :reg "HKCU\Control Panel\Desktop"  "LowLevelHooksTimeout" "REG_SZ" "1000"
+call :reg "HKCU\Control Panel\Desktop"  "MenuShowDelay" "REG_SZ" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control" "WaitToKillServiceTimeout" "REG_SZ" "2000"
 
 :: Memory Tweaks
 : source - https://github.com/SanGraphic/QuickBoost/blob/main/v2/MemoryTweaks.bat
 
 :: Enabling Large System Cache makes the OS use all RAM for caching system files,
 :: except 4MB reserved for disk cache, improving Windows responsiveness.
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d "1" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" "LargeSystemCache" "REG_DWORD" "1"
 
 :: Disabling Windows attempt to save as much RAM as possible, such as sharing pages for images, copy-on-write for data pages, and compression
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingCombining" /t REG_DWORD /d "1" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" "DisablePagingCombining" "REG_DWORD" "1"
 
 :: Enabling this parameter keeps the system kernel and drivers in RAM instead of the page file, improving responsiveness.
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d "1" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" "DisablePagingExecutive" "REG_DWORD" "1"
 
 :: DirectX Tweaks
 :: source - https://youtu.be/itTcqcJxtbo
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_ENABLE_UNSAFE_COMMAND_BUFFER_REUSE" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_ENABLE_RUNTIME_DRIVER_OPTIMIZATIONS" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_RESOURCE_ALIGNMENT" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D11_MULTITHREADED" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_MULTITHREADED" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D11_DEFERRED_CONTEXTS" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_DEFERRED_CONTEXTS" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D11_ALLOW_TILING" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D11_ENABLE_DYNAMIC_CODEGEN" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_ALLOW_TILING" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_CPU_PAGE_TABLE_ENABLED" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_HEAP_SERIALIZATION_ENABLED" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_MAP_HEAP_ALLOCATIONS" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SOFTWARE\Microsoft\DirectX" /v "D3D12_RESIDENCY_MANAGEMENT_ENABLED" /t REG_DWORD /d "1" /f
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D12_ENABLE_UNSAFE_COMMAND_BUFFER_REUSE" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D12_ENABLE_RUNTIME_DRIVER_OPTIMIZATIONS" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D12_RESOURCE_ALIGNMENT" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D11_MULTITHREADED" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D12_MULTITHREADED" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D11_DEFERRED_CONTEXTS" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D12_DEFERRED_CONTEXTS" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D11_ALLOW_TILING" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D11_ENABLE_DYNAMIC_CODEGEN" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D12_ALLOW_TILING" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D12_CPU_PAGE_TABLE_ENABLED" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D12_HEAP_SERIALIZATION_ENABLED" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" "D3D12_MAP_HEAP_ALLOCATIONS" "REG_DWORD" "1"
+call :reg "HKLM\SOFTWARE\Microsoft\DirectX" '"D3D12_RESIDENCY_MANAGEMENT_ENABLED" "REG_DWORD" "1"
 
 :: Serialize Timer Expiration mechanism, officially documented in Windows Internals 7th Edition Part 2
 :: source - https://youtu.be/wil-09_5H0M
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "SerializeTimerExpiration" /t REG_DWORD /d "1" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" '"SerializeTimerExpiration" "REG_DWORD" "1"
 
 goto customGPUTweaks
 
@@ -485,7 +493,7 @@ if !ramSize! == 6 (
 )
 
 if defined svcHostThreshold (
-    reg.exe add "HKLM\SYSTEM\ControlSet001\Control" /v "SvcHostSplitThresholdInKB" /t REG_DWORD /d "!svcHostThreshold!" /f
+    call :reg "HKLM\SYSTEM\ControlSet001\Control" "SvcHostSplitThresholdInKB" "REG_DWORD" "!svcHostThreshold!"
     echo %colorGreen%Successfully applied tweak for !ramSizeText! RAM.%colorReset%
 ) else (
     echo %colorRed%Invalid selection.%colorReset%
@@ -509,46 +517,46 @@ if errorlevel 1 goto nvidia
 
 :nvidia
 : source - https://github.com/AlchemyTweaks/Verified-Tweaks/blob/main/Nvidia/RmGpsPsEnablePerCpuCoreDpc
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "RmGpsPsEnablePerCpuCoreDpc" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Power" /v "RmGpsPsEnablePerCpuCoreDpc" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm" /v "RmGpsPsEnablePerCpuCoreDpc" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\NVAPI" /v "RmGpsPsEnablePerCpuCoreDpc" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\NVTweak" /v "RmGpsPsEnablePerCpuCoreDpc" /t REG_DWORD /d "1" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" "RmGpsPsEnablePerCpuCoreDpc" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Power" "RmGpsPsEnablePerCpuCoreDpc" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm" "RmGpsPsEnablePerCpuCoreDpc" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\NVAPI" "RmGpsPsEnablePerCpuCoreDpc" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\NVTweak" "RmGpsPsEnablePerCpuCoreDpc" "REG_DWORD" "1"
 
 goto main
 
 :amd
 : source - https://youtu.be/nuUV2RoPOWc
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "AllowSnapshot" /t REG_DWORD /d "0" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "AllowSubscription" /t REG_DWORD /d "0" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "AllowRSOverlay" /t REG_SZ /d "false" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "AllowSkins" /t REG_SZ /d "false" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "AutoColorDepthReduction_NA" /t REG_DWORD /d "0" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DisableUVDPowerGatingDynamic" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DisableVCEPowerGating" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DisablePowerGating" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DisableDrmdmaPowerGating" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DisableDMACopy" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DisableBlockWrite" /t REG_DWORD /d "0" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "StutterMode" /t REG_DWORD /d "0" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "PP_GPUPowerDownEnabled" /t REG_DWORD /d "0" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "LTRSnoopL1Latency" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "LTRSnoopL0Latency" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "LTRNoSnoopL1Latency" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "LTRMaxNoSnoopLatency" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "KMD_RpmComputeLatency" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DalUrgentLatencyNs" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "memClockSwitchLatency" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "PP_RTPMComputeF1Latency" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "PP_DGBMMMaxTransitionLatencyUvd" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "PP_DGBPMMaxTransitionLatencyGfx" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DalNBLatencyForUnderFlow" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "BGM_LTRSnoopL1Latency" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "BGM_LTRSnoopL0Latency" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "BGM_LTRNoSnoopL1Latency" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "BGM_LTRNoSnoopL0Latency" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "BGM_LTRMaxSnoopLatencyValue" /t REG_DWORD /d "1" /f
-reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "BGM_LTRMaxNoSnoopLatencyValue" /t REG_DWORD /d "1" /f
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "AllowSnapshot" "REG_DWORD" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "AllowSubscription" "REG_DWORD" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "AllowRSOverlay" "REG_SZ" "false"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "AllowSkins" "REG_SZ" "false"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "AutoColorDepthReduction_NA" "REG_DWORD" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "DisableUVDPowerGatingDynamic" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "DisableVCEPowerGating" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "DisablePowerGating" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "DisableDrmdmaPowerGating" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "DisableDMACopy" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "DisableBlockWrite" "REG_DWORD" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "StutterMode" "REG_DWORD" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "PP_GPUPowerDownEnabled" "REG_DWORD" "0"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "LTRSnoopL1Latency" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "LTRSnoopL0Latency" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "LTRNoSnoopL1Latency" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "LTRMaxNoSnoopLatency" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "KMD_RpmComputeLatency" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "DalUrgentLatencyNs" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "memClockSwitchLatency" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "PP_RTPMComputeF1Latency" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "PP_DGBMMMaxTransitionLatencyUvd" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "PP_DGBPMMaxTransitionLatencyGfx" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "DalNBLatencyForUnderFlow" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "BGM_LTRSnoopL1Latency" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "BGM_LTRSnoopL0Latency" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "BGM_LTRNoSnoopL1Latency" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "BGM_LTRNoSnoopL0Latency" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "BGM_LTRMaxSnoopLatencyValue" "REG_DWORD" "1"
+call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "BGM_LTRMaxNoSnoopLatencyValue" "REG_DWORD" "1" 
 
 goto main
 
@@ -688,7 +696,8 @@ echo %cMauve%  %cGreen%Microsoft Stuff:                                       %c
 echo %cMauve%  %cGrey%[24] DirectX            [25] .NET 8.0                  %cMauve% %cReset%
 echo %cMauve%  %cGrey%[26] PC Manager         [27] Edge WebView              %cMauve% %cReset%
 echo.
-echo %cMauve%  %cGrey%[28] Back to Main Menu                                 %cMauve% %cReset%
+echo %cMauve%  %cGrey%[28] Update all installed apps                          %cMauve% %cReset%
+echo %cMauve%  %cGrey%[29] Back to Main Menu                                 %cMauve% %cReset%
 echo %cMauve% +--------------------------------------------------------+%cReset%
 
 set /p choice="%cSapphire%Enter your choices (space-separated numbers '1 2'): %cReset%"
@@ -696,8 +705,17 @@ set /p choice="%cSapphire%Enter your choices (space-separated numbers '1 2'): %c
 :: Process each number in the input sequentially
 for %%a in (%choice%) do (
     if %%a==0 (
-        goto searchProgram
+        goto searchPkg
     ) else if %%a==28 (
+        echo %cGrey%Updating all installed apps...%cReset%
+        winget upgrade --all --accept-package-agreements --accept-source-agreements
+        if !errorlevel! equ 0 (
+            echo %cGreen%Successfully updated all apps.%cReset%
+        ) else (
+            echo %cRed%Failed to update some apps. Error code: !errorlevel!%cReset%
+            pause
+        )
+    ) else if %%a==29 (
         goto main
     ) else (
         :: Check if it's a valid number
@@ -726,12 +744,12 @@ for %%a in (%choice%) do (
 
 goto wingetInstall
 
-:searchProgram
+:searchPkg
 cls
 echo %cGrey%Enter Program name to search (or 'b' to return):%cReset%
 set /p "searchTerm="
 if /i "%searchTerm%"=="b" goto wingetInstall
-if /i "%searchTerm%"=="" goto searchProgram
+if /i "%searchTerm%"=="" goto searchPkg
 
 echo %cGrey%Searching for "%searchTerm%"...%cReset%
 winget search "%searchTerm%"
@@ -739,22 +757,23 @@ echo.
 echo %cGrey%Enter the exact package ID to install (or 'b' to return):%cReset%
 set /p "packageId="
 if /i "%packageId%"=="b" goto wingetInstall
-if /i "%packageId%"=="" goto searchProgram
+if /i "%packageId%"=="" goto searchPkg
 
-call :installPackage "%packageId%"
+call :installPkg "%packageId%"
 goto wingetInstall
 
-:installPackage
+:installPkg
 set "packageId=%~1"
 echo.
 echo %cGrey%Installing %packageId%...%cReset%
 winget install --id %packageId% --accept-package-agreements --accept-source-agreements
 if !errorlevel! equ 0 (
     echo %cGreen%Successfully installed %packageId%%cReset%
+    goto searchPkg
 ) else (
     echo %cRed%Failed to install %packageId%. Error code: !errorlevel!%cReset%
     pause
-    goto wingetInstall
+    goto searchPkg
 )
 
 :coolStuff
@@ -762,3 +781,54 @@ cls
 start "" "https://github.com/emylfy/simplify11?tab=readme-ov-file#-cool-stuff"
 pause
 goto main
+
+:laptopMenu
+cls
+:: Define URLs for modern laptop manufacturers
+set "url[0]=https://support.hp.com/us-en/drivers"
+set "url[1]=https://support.lenovo.com"
+set "url[2]=https://www.asus.com/support/download-center/"
+set "url[3]=https://www.acer.com/ac/en/US/content/drivers"
+set "url[4]=https://www.msi.com/support/download"
+set "url[5]=https://www.huawei.com/en/support"
+set "url[6]=https://www.xiaomi.com/global/support"
+set "url[7]=https://www.alienware.com/support"
+set "url[8]=https://www.gigabyte.com/support/consumer"
+
+echo %cGrey%Select a laptop manufacturer to visit their driver site:%cReset%
+echo.
+echo %cGrey%[0] HP%cReset%
+echo %cGrey%[1] Lenovo%cReset%
+echo %cGrey%[2] Asus%cReset%
+echo %cGrey%[3] Acer%cReset%
+echo %cGrey%[4] MSI%cReset%
+echo %cGrey%[5] Huawei%cReset%
+echo %cGrey%[6] Xiaomi%cReset%
+echo %cGrey%[7] Alienware%cReset%
+echo %cGrey%[8] Gigabyte%cReset%
+echo.
+echo %cGrey%[9] Exit%cReset%
+
+choice /C 0123456789 /N /M "Select a number: "
+set /A "choice=%errorlevel%-1"
+
+if %choice% geq 0 if %choice% leq 8 (
+    start "" "!url[%choice%]!"
+    exit
+) else if %choice%==-1 (
+    exit
+) else (
+    echo %cRed%Invalid choice. Returning to main menu.%cReset%
+    pause
+    goto laptopMenu
+)
+
+:reg
+set "key=%~1"
+set "valueName=%~2"
+set "valueType=%~3"
+set "valueData=%~4"
+reg.exe add "%key%" /v "%valueName%" /t "%valueType%" /d "%valueData%" /f
+goto :eof
+
+@REM reg add "HKEY_CURRENT_USER\Control Panel\International" sShortDate "REG_SZ" "d MMM yy"

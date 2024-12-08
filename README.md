@@ -1,24 +1,21 @@
 # Simplify11 ⚡
 
 <p align="center">
-	<img src="src/logo.png" width="90%" alt="Simplify11 Logo">
+	<img src="src/logo.png" alt="Simplify11 Logo">
 </p>
 
 <p align="center">
-	<strong>A powerful Windows toolkit with Essential Tweaks & Scripts</strong>
+	<strong>A powerful Windows toolkit that quickly configures your system</strong>
 </p>
 
-<p align="center">
-	<a href="https://github.com/emylfy/simplify11/stargazers">
-		<img src="https://img.shields.io/github/stars/emylfy/simplify11?style=for-the-badge&logo=github&color=yellow" alt="GitHub Stars">
-	</a>
-	<a href="https://github.com/emylfy/simplify11/network/members">
-		<img src="https://img.shields.io/github/forks/emylfy/simplify11?style=for-the-badge&logo=github&color=blue" alt="GitHub Forks">
-	</a>
-	<a href="https://github.com/emylfy/simplify11/issues">
-		<img src="https://img.shields.io/github/issues/emylfy/simplify11?style=for-the-badge&logo=github&color=red" alt="GitHub Issues">
-	</a>
-</p>
+<!-- <p align="center">
+<a href="https://github.com/emylfy/simplify11/stargazers">
+	<img src="https://img.shields.io/github/stars/emylfy/simplify11?style=flat-square" alt="GitHub Stars"></a>
+<a href="https://github.com/emylfy/simplify11/network/members">
+	<img src="https://img.shields.io/github/forks/emylfy/simplify11?style=flat-square" alt="GitHub Forks"></a>
+<a href="https://github.com/emylfy/simplify11/issues">
+	<img src="https://img.shields.io/github/issues/emylfy/simplify11?style=flat-square" alt="GitHub Issues"></a>
+</p> -->
 
 <p align="center">
 	<a href="#-features">Features</a> •
@@ -100,7 +97,7 @@ iwr "https://dub.sh/s11install" | iex
 <td align="center">
 <img src="https://github.com/ChrisTitusTech/winutil/blob/main/docs/assets/favicon.png?raw=true" width="60px" alt="WinUtil"><br/>
 <b><a href="https://github.com/ChrisTitusTech/winutil">WinUtil</a></b><br/>
-<sub>System tweaks & fixes</sub>
+<sub>Best Windows Utility</sub>
 </td>
 <td align="center">
 <img src="https://raw.githubusercontent.com/undergroundwires/privacy.sexy/refs/heads/master/img/logo.svg" width="60px" alt="Privacy.sexy"><br/>
@@ -110,7 +107,23 @@ iwr "https://dub.sh/s11install" | iex
 <td align="center">
 <img src="https://raw.githubusercontent.com/microsoft/winget-cli/refs/heads/master/.github/images/WindowsPackageManager_Assets/ICO/PNG/_64.png" width="60px" alt="Winget"><br/>
 <b><a href="https://github.com/microsoft/winget-cli">Winget</a></b><br/>
-<sub>Package management</sub>
+<sub>Package manager</sub>
+</td>
+<td align="center">
+<picture>
+  <source
+    srcset="https://assets.dub.co/brand/logo-dark.svg"
+    media="(prefers-color-scheme: dark)"
+  />
+  <source
+    srcset="https://assets.dub.co/brand/logo.svg"
+    media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
+  />
+  <img src="https://assets.dub.co/brand/logo.svg" width="60px" />
+</picture>
+
+<b><a href="https://app.dub.co">Dub.co</a></b><br/>
+<sub>Link managment</sub>
 </td>
 </tr>
 </table>
@@ -122,6 +135,7 @@ iwr "https://dub.sh/s11install" | iex
 
   - [Rectify11 Installer](https://github.com/Rectify11/Installer) - Modern UI redesign for Windows 11
   - [Autounattend.xml](https://gist.github.com/emylfy/d53ba22c2c8c00fe3f98887290d763e5) - Customizable Answer file to perform automated windows installation
+  - [WinDynamicDesktop](https://github.com/t1m0thyj/WinDynamicDesktop) - Port of macOS Dynamic Desktop Wallpapers feature
 </details>
 
 ## 🌟 Credits
@@ -149,5 +163,5 @@ iwr "https://dub.sh/s11install" | iex
 
 ### ⭐ Love this project? Show your support by giving it a star!
 
-#### ✨ If you have specific recommendations on how to improve or change this guide or any suggestions and wishes, you can write everything in [**Issues**](https://github.com/emylfy/simplify11/issues/).
+#### ✨ If you have specific recommendations on how to improve or change this project or any suggestions and wishes, you can write everything in [**Issues**](https://github.com/emylfy/simplify11/issues/).
 </div>
