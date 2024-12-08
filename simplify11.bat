@@ -178,14 +178,14 @@ for /f "delims=" %%i in ('powershell -NoProfile -Command ^
 )
 
 if "%isLaptop%"=="false" (
-    goto applyPowerIntensiveTweaks
+    call :applyPowerIntensiveTweaks
 )
 
 if "%isLaptop%"=="true" (
     echo %cGrey%Do you want to apply tweaks that will use maximum power and can drain the battery faster?%cReset%
     choice /C YN /N /M "[Y] Yes [N] No: "
     if errorlevel 2 (
-        goto skipPowerIntensiveTweaks
+        call :skipPowerIntensiveTweaks
     )
 )
 
@@ -795,7 +795,7 @@ set "url[6]=https://www.xiaomi.com/global/support"
 set "url[7]=https://www.alienware.com/support"
 set "url[8]=https://www.gigabyte.com/support/consumer"
 
-echo %cGrey%Select a laptop manufacturer to visit their driver site:%cReset%
+echo %cGrey%Select your laptop manufacturer to install drivers:%cReset%
 echo.
 echo %cGrey%[0] HP%cReset%
 echo %cGrey%[1] Lenovo%cReset%
@@ -807,20 +807,20 @@ echo %cGrey%[6] Xiaomi%cReset%
 echo %cGrey%[7] Alienware%cReset%
 echo %cGrey%[8] Gigabyte%cReset%
 echo.
-echo %cGrey%[9] Exit%cReset%
+echo %cGrey%[9] Back to menu%cReset%
 
 choice /C 0123456789 /N /M "Select a number: "
 set /A "choice=%errorlevel%-1"
 
 if %choice% geq 0 if %choice% leq 8 (
     start "" "!url[%choice%]!"
-    exit
-) else if %choice%==-1 (
-    exit
+    goto main
+) else if %choice%==9 (
+    goto main
 ) else (
     echo %cRed%Invalid choice. Returning to main menu.%cReset%
-    pause
-    goto laptopMenu
+    timeout /t 2 >nul
+    goto main
 )
 
 :reg
