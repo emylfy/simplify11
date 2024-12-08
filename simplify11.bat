@@ -300,7 +300,7 @@ call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "D
 : Forces devices to complete tasks instantly.
 call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DEVICE_COMPLETION_POLICY" "REG_SZ" "0"
 call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "DEVICE_MAX_PENDING_INTERRUPTS" "REG_SZ" "0"
-goto :mainTweaks
+goto mainTweaks
 
 :mainTweaks
 :: Changing Interrupts behavior for lower latency
