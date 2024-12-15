@@ -23,6 +23,7 @@ echo.
 
 echo %cMauve% +--------------------------------------------------------+%cReset%
 echo %cMauve% '%cGrey% Checking for existing 'Pre-Script Restore Point'...    %cMauve%'%cReset%
+echo %cMauve% +--------------------------------------------------------+%cReset%
 for /f "usebackq delims=" %%i in (`powershell -Command "Get-ComputerRestorePoint | Where-Object { $_.Description -eq 'Pre-Script Restore Point' } | Measure-Object -Property Description | Select-Object -ExpandProperty Count"`) do (
     if %%i gtr 0 (
         set "hasRestorePoint=1"
@@ -34,7 +35,6 @@ for /f "usebackq delims=" %%i in (`powershell -Command "Get-ComputerRestorePoint
     )
 )
 
-echo %cMauve% +--------------------------------------------------------+%cReset%
 echo %cMauve% '%cGrey% Would you like to create a system restore point?       %cMauve%'%cReset%
 echo %cMauve% '%cGrey% This is recommended to safely revert changes if needed %cMauve%'%cReset%
 echo %cMauve% +--------------------------------------------------------+%cReset%
@@ -43,26 +43,26 @@ if %errorlevel%==2 goto main
 
 echo %cMauve% +--------------------------------------------------------+%cReset%
 echo %cMauve% '%cGrey% Configuring system restore settings...                  %cMauve%'%cReset%
-call :reg "HKLM\Software\Microsoft\Windows NT\CurrentVersion\SystemRestore" "SystemRestorePointCreationFrequency" "REG_DWORD" "0" "Disabled restore point frequency limit for instant creation"
+call :reg "HKLM\Software\Microsoft\Windows NT\CurrentVersion\SystemRestore" "SystemRestorePointCreationFrequency" "REG_DWORD" "0" "Disabled restore point frequency limit for instant creation" >nul 2>&1
 if errorlevel 1 (
     echo %cMauve% '%cRed% Failed to create restore point.                       %cMauve%'%cReset%
     echo %cMauve% '%cRed% Please ensure System Protection is enabled.           %cMauve%'%cReset%
     echo %cMauve% +--------------------------------------------------------+%cReset%
-    timeout /t 2 >nul
+    pause
 )
 
-echo %cMauve% '%cGrey% Creating system restore point (this may take a moment)..%cMauve%'%cReset%
+echo %cMauve% '%cGrey% Creating system restore point (this may take a moment)  %cMauve%'%cReset%
 powershell -Command "Checkpoint-Computer -Description 'Pre-Script Restore Point' -RestorePointType 'MODIFY_SETTINGS' -ErrorAction Stop" >nul 2>&1
 if errorlevel 1 (
     echo %cMauve% '%cRed% Failed to create restore point.                       %cMauve%'%cReset%
     echo %cMauve% '%cRed% Please ensure System Protection is enabled.           %cMauve%'%cReset%
-    echo %cMauve% '%cRed% You can enable it in System Properties ^> System Protection.%cMauve%'%cReset%
+    echo %cMauve% '%cRed% You can enable it in Sys Properties, Sys Protection   %cMauve%'%cReset%
     echo %cMauve% +--------------------------------------------------------+%cReset%
     pause
 ) else (
-    echo %cMauve% '%cGreen% Restore point created successfully.                 %cMauve%'%cReset%
+    echo %cMauve% '%cGreen% Restore point created successfully.                    %cMauve%'%cReset%
     echo %cMauve% +--------------------------------------------------------+%cReset%
-    timeout /t 2 >nul
+    pause
 )
 
 :main
@@ -70,7 +70,7 @@ title Simplify11
 cls
 echo.
 echo %cMauve% +--------------------------------------------------------+%cReset%
-echo %cMauve% '%cMauve% Tired of System Setup After Reinstall? Simplify It!     %cMauve%'%cReset%
+echo %cMauve% '%cMauve%  Tired of System Setup After Reinstall? Simplify It!    %cMauve%'%cReset%
 echo %cMauve% +--------------------------------------------------------+%cReset%
 if "%hasRestorePoint%"=="1" (
     echo %cMauve% '%cGrey% [0] Use Existing Restore Point                         %cMauve%'%cReset%
@@ -84,9 +84,9 @@ echo %cMauve% '%cGrey% [6] Check other cool stuff                             %c
 echo %cMauve% '%cGrey% [7] Check PC/Laptop Manufacturers (Soft and drivers)   %cMauve%'%cReset%
 echo %cMauve% +--------------------------------------------------------+%cReset%
 if "%hasRestorePoint%"=="1" (
-    choice /C 01234567 /N /M " "
+    choice /C 01234567 /N /M ">"
 ) else (
-    choice /C 1234567 /N /M " "
+    choice /C 1234567 /N /M ">"
 )
 if "%hasRestorePoint%"=="1" (
     if %errorlevel%==1 goto applyRestorePoint
@@ -97,31 +97,32 @@ if "%hasRestorePoint%"=="1" (
 goto s!menuChoice!
 
 :applyRestorePoint
-echo. WIP
+cls
+echo.
+echo %cMauve% +----------------------------------------------------------+%cReset%
+echo %cMauve% '%cGrey% Restore Point Management                                 %cMauve%'%cReset%
+echo %cMauve% +----------------------------------------------------------+%cReset%
+echo %cMauve% '%cGrey% Select and apply the Pre-Script Restore Point            %cMauve%'%cReset%
+@REM powershell -Command "Get-ComputerRestorePoint | Where-Object { $_.Description -eq 'Pre-Script Restore Point' } | ForEach-Object { Restore-Computer -RestorePoint $_.SequenceNumber -Confirm:$false }"
+start /wait rstrui.exe
+if errorlevel 1 (
+    echo %cRed% ' Failed to apply restore point.                          %cMauve%'%cReset%
+    echo %cRed% ' Please try applying it manually through System Restore  %cMauve%'%cReset%
+) else (
+    echo %cMauve% '%cGrey% It is recommended to restart your computer               %cMauve%'%cReset%
+    echo %cMauve% '%cGrey% to ensure all changes take effect                        %cMauve%'%cReset%
+    echo %cMauve% '%cGrey% Would you like to restart now?                           %cMauve%'%cReset%
+    echo %cMauve% +----------------------------------------------------------+%cReset%
+    choice /C 12 /N /M "[1] Yes or [2] No : "
+    if !errorlevel!==1 (
+        shutdown /r /t 0
+    ) else (
+        echo Restart your PC to take full effect
+        pause
+        goto :main
+    )
+)
 pause
-goto :main
-rem  cls
-rem  echo.
-rem  echo %cMauve% +--------------------------------------------------------+%cReset%
-rem  echo %cMauve% '%cGrey% Restore Point Management                                %cMauve%'%cReset%
-rem  echo %cMauve% +--------------------------------------------------------+%cReset%
-rem  echo %cGrey%Applying the Pre-Script Restore Point...%cReset%
-rem  powershell -Command "Get-ComputerRestorePoint | Where-Object { $_.Description -eq 'Pre-Script Restore Point' } | ForEach-Object { Restore-Computer -RestorePoint $_.SequenceNumber -Confirm:$false }"
-rem  if errorlevel 1 (
-rem      echo %cRed%Failed to apply restore point. Please try applying it manually through System Restore.%cReset%
-rem  ) else (
-rem      echo %cGreen%Restore point applied successfully.%cReset%
-rem      echo %cGrey%It is recommended to restart your computer to ensure all changes take effect.%cReset%
-rem      echo %cGrey%Would you like to restart now?%cReset%
-rem      choice /C YN /N /M "[Y] Yes [N] No: "
-rem      if !errorlevel!==1 (
-rem          shutdown /r /t 0
-rem      ) else (
-rem          echo %cGrey%Restart your PC to take full effect.%cReset%
-rem          pause
-rem      )
-rem  )
-rem  pause
 
 :s1
 call :applyTweaks
@@ -155,17 +156,18 @@ goto :laptopMenu
 :: Storage Type Selection
 cls
 echo.
-echo %cMauve% +--------------------------------------------------------+%cReset%
-echo %cMauve% '%cGrey% Storage Device Selection                               %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [1] SSD/NVMe                                           %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [2] HDD                                                %cMauve%'%cReset%
-echo %cMauve% +--------------------------------------------------------+%cReset%
-choice /C 12 /N /M " "
+echo %cMauve% +-----------------------------------+%cReset%
+echo %cMauve% '%cGrey% Storage Device Selection          %cMauve%'%cReset%
+echo %cMauve% +-----------------------------------+%cReset%
+echo %cMauve% '%cGrey% [1] SSD/NVMe                      %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [2] HDD                           %cMauve%'%cReset%
+echo %cMauve% +-----------------------------------+%cReset%
+choice /C 12 /N /M ">"
 
 if errorlevel 2 (
-    echo %cGrey%HDD selected - Skipping SSD optimizations...%cReset%
+    echo %cGrey%HDD selected - Applying optimizations...%cReset%
 ) else (
-    echo %cGreen%SSD/NVMe selected - Applying SSD optimizations...%cReset%
+    echo %cGreen%SSD/NVMe selected - Applying optimizations...%cReset%
     :: Enable and optimize TRIM for SSD
     fsutil behavior set DisableDeleteNotify 0
     :: Disable defragmentation for SSDs
@@ -193,16 +195,19 @@ if "%isLaptop%"=="false" (
 
 if "%isLaptop%"=="true" (
     echo.
-    echo %cMauve% +--------------------------------------------------------+%cReset%
-    echo %cMauve% '%cGrey% Power Management - Max Pending Interrupts                %cMauve%'%cReset%
-    echo %cMauve% +--------------------------------------------------------+%cReset%
-    echo %cMauve% '%cGrey% Do you want to apply tweaks that will use                %cMauve%'%cReset%
-    echo %cMauve% '%cGrey% maximum power and can drain the battery faster?          %cMauve%'%cReset%
-    echo %cMauve% +--------------------------------------------------------+%cReset%
+    echo %cMauve% +-----------------------------------------------------+%cReset%
+    echo %cMauve% '%cGrey% Power Management - Max Pending Interrupts           %cMauve%'%cReset%
+    echo %cMauve% +-----------------------------------------------------+%cReset%
+    echo %cMauve% '%cGrey% Do you want to apply tweaks that will use           %cMauve%'%cReset%
+    echo %cMauve% '%cGrey% maximum power and can drain the battery faster?     %cMauve%'%cReset%
+    echo %cMauve% +-----------------------------------------------------+%cReset%
     choice /C 12 /N /M "[1] Yes [2] No: "
     if errorlevel 2 (
-        call :mainTweaks
+    echo Skipping...
+    timeout /t 2
+    goto mainTweaks
     )
+    if errorlevel 1 goto applyPowerIntensiveTweaks
 )
 
 :applyPowerIntensiveTweaks
@@ -454,19 +459,19 @@ goto customGPUTweaks
 :customGPUTweaks
 cls
 echo.
-echo %cMauve% +--------------------------------------------------------+%cReset%
-echo %cMauve% '%cGrey% Select Your RAM Size:                                    %cMauve%'%cReset%
-echo %cMauve% +--------------------------------------------------------+%cReset%
-echo %cMauve% '%cGrey% [1] 4GB RAM                                             %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [2] 6GB RAM                                             %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [3] 8GB RAM                                             %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [4] 16GB RAM                                            %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [5] 32GB RAM                                            %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [6] 64GB RAM                                            %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [7] Skip if Unsure                                      %cMauve%'%cReset%
-echo %cMauve% +--------------------------------------------------------+%cReset%
+echo %cMauve% +-----------------------------+%cReset%
+echo %cMauve% '%cGrey% Select Your RAM Size:       %cMauve%'%cReset%
+echo %cMauve% +-----------------------------+%cReset%
+echo %cMauve% '%cGrey% [1] 4GB                     %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [2] 6GB                     %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [3] 8GB                     %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [4] 16GB                    %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [5] 32GB                    %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [6] 64GB                    %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [7] Skip if Unsure          %cMauve%'%cReset%
+echo %cMauve% +-----------------------------+%cReset%
 choice /C 1234567 /N /M "%colorSapphire%>%colorReset%"
-if errorlevel 7 goto main
+if errorlevel 7 call :next
 call :setRAMSize %errorlevel%
 
 :setRAMSize
@@ -515,12 +520,12 @@ echo.
 echo %cGrey%[1] NVIDIA%cReset%
 echo %cGrey%[2] AMD%cReset%
 echo.
-echo %cGrey%[3] Skip if Unsure%cReset%
+echo %cGrey%[3] Skip%cReset%
 echo.
-choice /C 123 /N /M "%colorSapphire%>%colorReset%"
-if errorlevel 1 goto nvidia
-if errorlevel 2 goto amd
-if errorlevel 3 goto main
+choice /C 123 /N /M ">"
+if errorlevel 3 call :main
+if errorlevel 2 call :amd
+if errorlevel 1 call :nvidia
 
 :nvidia
 :: NVIDIA Specific Tweaks
@@ -530,6 +535,7 @@ call :reg "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Power" "RmGpsPs
 call :reg "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm" "RmGpsPsEnablePerCpuCoreDpc" "REG_DWORD" "1" "Enabled NVIDIA driver per-CPU core DPC"
 call :reg "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\NVAPI" "RmGpsPsEnablePerCpuCoreDpc" "REG_DWORD" "1" "Enabled NVIDIA API per-CPU core DPC"
 call :reg "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\NVTweak" "RmGpsPsEnablePerCpuCoreDpc" "REG_DWORD" "1" "Enabled global NVIDIA tweaks for per-CPU core DPC"
+pause
 
 goto main
 
@@ -565,6 +571,7 @@ call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-
 call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "BGM_LTRNoSnoopL0Latency" "REG_DWORD" "1" "Optimized BGM LTR No Snoop L0 latency"
 call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "BGM_LTRMaxSnoopLatencyValue" "REG_DWORD" "1" "Optimized BGM LTR max snoop latency"
 call :reg "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" "BGM_LTRMaxNoSnoopLatencyValue" "REG_DWORD" "1" "Optimized BGM LTR max no snoop latency"
+pause
 
 goto main
 
@@ -628,6 +635,7 @@ if %errorlevel%==1 (
         start "" "shell:AppsFolder\Microsoft.PCManager_8wekyb3d8bbwe!App"
     ) else (
         echo Failed to install PC Manager. Please try manually.
+        start "" "ms-windows-store://pdp?hl=en-us&gl=us&ocid=pdpshare&referrer=storeforweb&productid=9pm860492szd&storecid=storeweb-pdp-open-cta"
         pause
     )
 )
@@ -731,20 +739,20 @@ for %%a in (%choice%) do (
         if !num! geq 1 if !num! leq 27 (
             if defined pkg[%%a] (
                 echo.
-                echo %cGrey%Installing !pkg[%%a]!...%cReset%
+                echo Installing !pkg[%%a]!...
                 winget install --id !pkg[%%a]! --accept-package-agreements --accept-source-agreements
                 if !errorlevel! equ 0 (
-                    echo %cGreen%Successfully installed !pkg[%%a]!%cReset%
+                    echo Successfully installed !pkg[%%a]!
                 ) else (
-                    echo %cRed%Failed to install !pkg[%%a]!. Error code: !errorlevel!%cReset%
+                    echo Failed to install !pkg[%%a]!. Error code: !errorlevel!
                     pause
                 )
             ) else (
-                echo %cRed%No package defined for choice %%a%cReset%
+                echo No package defined for choice %%a
                 pause
             )
         ) else (
-            echo %cRed%Invalid choice: %%a%cReset%
+            echo Invalid choice: %%a%
             pause
         )
     )
@@ -843,7 +851,7 @@ echo %cMauve% '%cGrey% [3] Open Lenovo Driver Page                            %c
 echo %cMauve% '%cGrey% [4] Back to Manufacturer Selection                     %cMauve%'%cReset%
 echo %cMauve% +--------------------------------------------------------+%cReset%
 
-choice /C 1234 /N /M " "
+choice /C 1234 /N /M ">"
 if errorlevel 4 goto laptopMenu
 if errorlevel 3 (
     start "" "https://support.lenovo.com"
@@ -856,6 +864,7 @@ if errorlevel 2 (
         echo %cGreen%Successfully installed Dolby Access.%cReset%
     ) else (
         echo %cRed%Failed to install Dolby Access. Please install manually from the Microsoft Store.%cReset%
+         start "" "ms-windows-store://pdp?hl=en-us&gl=us&ocid=pdpshare&referrer=storeforweb&productid=9N0866FS04W8&storecid=storeweb-pdp-open-cta"
     )
     timeout /t 2
     goto lenovoMenu
@@ -867,6 +876,7 @@ if errorlevel 1 (
         echo %cGreen%Successfully installed Lenovo Vantage.%cReset%
     ) else (
         echo %cRed%Failed to install Lenovo Vantage. Please install manually from the Microsoft Store.%cReset%
+         start "" "ms-windows-store://pdp?hl=en-us&gl=us&ocid=pdpshare&referrer=storeforweb&productid=9WZDNCRFJ4MV&storecid=storeweb-pdp-open-cta"
     )
     timeout /t 2
     goto lenovoMenu
