@@ -811,19 +811,21 @@ set "url[6]=https://www.xiaomi.com/global/support"
 set "url[7]=https://www.alienware.com/support"
 set "url[8]=https://www.gigabyte.com/support/consumer"
 
-echo %cGrey%Select your device manufacturer to install drivers:%cReset%
-echo.
-echo %cGrey%[0] HP%cReset%
-echo %cGrey%[1] Lenovo%cReset%
-echo %cGrey%[2] Asus%cReset%
-echo %cGrey%[3] Acer%cReset%
-echo %cGrey%[4] MSI%cReset%
-echo %cGrey%[5] Huawei%cReset%
-echo %cGrey%[6] Xiaomi%cReset%
-echo %cGrey%[7] Alienware%cReset%
-echo %cGrey%[8] Gigabyte%cReset%
-echo.
-echo %cGrey%[9] Back to menu%cReset%
+echo %cMauve% +-----------------------------------------------------+%cReset%
+echo %cMauve% '%cGrey% Select your device manufacturer to install drivers: %cMauve%'%cReset%
+echo %cMauve% +-----------------------------------------------------+%cReset%
+echo %cMauve% '%cGrey% [0] HP                                              %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [1] Lenovo                                          %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [2] Asus                                            %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [3] Acer                                            %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [4] MSI                                             %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [5] Huawei                                          %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [6] Xiaomi                                          %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [7] Alienware                                       %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [8] Gigabyte                                        %cMauve%'%cReset%
+echo %cMauve% +-----------------------------------------------------+%cReset%
+echo %cMauve% '%cGrey% [9] Back to menu                                    %cMauve%'%cReset%
+echo %cMauve% +-----------------------------------------------------+%cReset%
 
 choice /C 0123456789 /N /M "Select a number: "
 set /A "choice=%errorlevel%-1"
@@ -844,12 +846,13 @@ if %choice%==1 (
 :lenovoMenu
 cls
 echo.
-echo %cMauve% +--------------------------------------------------------+%cReset%
-echo %cMauve% '%cGrey% [1] Install Lenovo Vantage                             %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [2] Install Dolby Access                               %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [3] Open Lenovo Driver Page                            %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [4] Back to Manufacturer Selection                     %cMauve%'%cReset%
-echo %cMauve% +--------------------------------------------------------+%cReset%
+echo %cMauve% +--------------------------------------------+%cReset%
+echo %cMauve% '%cGrey% [1] Install Lenovo Vantage                 %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [2] Install Dolby Access                   %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [3] Open Lenovo Driver Page                %cMauve%'%cReset%
+echo %cMauve% +--------------------------------------------+%cReset%
+echo %cMauve% '%cGrey% [4] Back to Manufacturer Selection         %cMauve%'%cReset%
+echo %cMauve% +--------------------------------------------+%cReset%
 
 choice /C 1234 /N /M ">"
 if errorlevel 4 goto laptopMenu
