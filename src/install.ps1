@@ -22,6 +22,15 @@ $shortcut.Description = "Launch Simplify11"
 # Set the shortcut working directory
 $shortcut.WorkingDirectory = $startMenuPath
 
+# Download icon
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/arnav-kr/windows-11-icons/refs/heads/main/imageres_5308.ico" -OutFile "$env:APPDATA\icon.ico"
+
+# Set the path to the ICO file
+$icoPath = "$env:APPDATA\icon.ico"  # Make sure this path points to the ICO file
+
+# Set the icon for the shortcut
+$shortcut.IconLocation = $icoPath
+
 # Save the shortcut
 $shortcut.Save()
 
