@@ -80,8 +80,8 @@ echo %cMauve% '%cGrey% [2] Free Up Space                                      %c
 echo %cMauve% '%cGrey% [3] WinUtil - Install Programs, Tweaks and Fixes       %cMauve%'%cReset%
 echo %cMauve% '%cGrey% [4] Privacy.Sexy - Tool to enforce privacy in clicks   %cMauve%'%cReset%
 echo %cMauve% '%cGrey% [5] Winget - Install programs without browser          %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [6] Check other cool stuff                             %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [7] Check PC/Laptop Manufacturers (Soft and drivers)   %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [6] Visit PC/Laptop Manufacturers (Soft and drivers)   %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [7] Check recommended stuff for customization          %cMauve%'%cReset%
 echo %cMauve% +--------------------------------------------------------+%cReset%
 if "%hasRestorePoint%"=="1" (
     choice /C 01234567 /N /M ">"
@@ -145,11 +145,11 @@ call :wingetInstall
 goto main
 
 :s6
-call :coolStuff
+call :deviceMenu
 goto main
 
 :s7
-goto :laptopMenu
+goto :coolStuff
 
 :applyTweaks
 
@@ -459,18 +459,18 @@ goto customGPUTweaks
 :customGPUTweaks
 cls
 echo.
-echo %cMauve% +-----------------------------+%cReset%
-echo %cMauve% '%cGrey% Select Your RAM Size:       %cMauve%'%cReset%
-echo %cMauve% +-----------------------------+%cReset%
-echo %cMauve% '%cGrey% [1] 4GB                     %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [2] 6GB                     %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [3] 8GB                     %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [4] 16GB                    %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [5] 32GB                    %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [6] 64GB                    %cMauve%'%cReset%
-echo %cMauve% '%cGrey% [7] Skip if Unsure          %cMauve%'%cReset%
-echo %cMauve% +-----------------------------+%cReset%
-choice /C 1234567 /N /M "%colorSapphire%>%colorReset%"
+echo %cMauve% +---------------------------+%cReset%
+echo %cMauve% '%cGrey% Select Your RAM Size:     %cMauve%'%cReset%
+echo %cMauve% +---------------------------+%cReset%
+echo %cMauve% '%cGrey% [1] 4GB                   %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [2] 6GB                   %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [3] 8GB                   %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [4] 16GB                  %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [5] 32GB                  %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [6] 64GB                  %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [7] Skip if Unsure        %cMauve%'%cReset%
+echo %cMauve% +---------------------------+%cReset%
+choice /C 1234567 /N /M "%cSapphire%>%cReset%"
 if errorlevel 7 call :next
 call :setRAMSize %errorlevel%
 
@@ -507,7 +507,7 @@ if !ramSize! == 6 (
 if defined svcHostThreshold (
     call :reg "HKLM\SYSTEM\ControlSet001\Control" "SvcHostSplitThresholdInKB" "REG_DWORD" "!svcHostThreshold!" "Set SvcHost Split Threshold for !ramSizeText! RAM optimization"
 ) else (
-    echo %colorRed%Invalid selection.%colorReset%
+    echo %cRed%Invalid selection.%cReset%
 )
 
 pause
@@ -515,13 +515,16 @@ goto next
 
 :next
 cls
-echo %cGrey%What kind of video card do you have?%cReset%
 echo.
-echo %cGrey%[1] NVIDIA%cReset%
-echo %cGrey%[2] AMD%cReset%
-echo.
-echo %cGrey%[3] Skip%cReset%
-echo.
+echo %cMauve% +-------------------------------------+%cReset%
+echo %cMauve% '%cGrey% Select your GPU manufacturer:       %cMauve%'%cReset%
+echo %cMauve% +-------------------------------------+%cReset%
+echo %cMauve% '%cGrey% [1] NVIDIA                          %cMauve%'%cReset%
+echo %cMauve% '%cGrey% [2] AMD                             %cMauve%'%cReset%
+echo %cMauve% +-------------------------------------+%cReset%
+echo %cMauve% '%cGrey% [3] Skip                            %cMauve%'%cReset%
+echo %cMauve% +-------------------------------------+%cReset%
+
 choice /C 123 /N /M ">"
 if errorlevel 3 call :main
 if errorlevel 2 call :amd
@@ -609,18 +612,88 @@ echo.
 echo %cGrey%Would you like to clear the Windows Update Folder?%cReset%
 choice /C 12 /N /M "[1] Yes or [2] No : "
 if %errorlevel%==1 (
+    echo %cGrey%Stopping Windows Update related services...%cReset%
+    net stop wuauserv >nul 2>&1
+    net stop cryptSvc >nul 2>&1
+    net stop bits >nul 2>&1
+    net stop msiserver >nul 2>&1
+    
     echo %cGrey%Clearing Windows Update Folder...%cReset%
-    rd /s /q %systemdrive%\Windows\SoftwareDistribution
-    md %systemdrive%\Windows\SoftwareDistribution
+    rd /s /q "%systemdrive%\Windows\SoftwareDistribution"
+    md "%systemdrive%\Windows\SoftwareDistribution"
+    
+    echo %cGrey%Restarting Windows Update related services...%cReset%
+    net start wuauserv >nul 2>&1
+    net start cryptSvc >nul 2>&1
+    net start bits >nul 2>&1
+    net start msiserver >nul 2>&1
+    
+    echo %cGreen%Windows Update folder has been cleared successfully.%cReset%
 )
 
 :: Advanced disk cleaner
 echo.
-echo %cGrey%Would you like to run the advanced disk cleaner?%cReset%
-choice /C 12 /N /M "[1] Yes or [2] No : "
+echo %cMauve% +--------------------------------------------------------+%cReset%
+echo %cMauve% '%cGrey% Advanced Disk Cleaner                                  %cMauve%'%cReset%
+echo %cMauve% +--------------------------------------------------------+%cReset%
+echo %cMauve% '%cGrey% This will clean:                                       %cMauve%'%cReset%
+echo %cMauve% '%cGrey% - Windows temporary files                              %cMauve%'%cReset%
+echo %cMauve% '%cGrey% - System error memory dump files                       %cMauve%'%cReset%
+echo %cMauve% '%cGrey% - Windows upgrade log files                            %cMauve%'%cReset%
+echo %cMauve% '%cGrey% - Windows Defender Antivirus files                     %cMauve%'%cReset%
+echo %cMauve% '%cGrey% - Delivery Optimization Files                          %cMauve%'%cReset%
+echo %cMauve% '%cGrey% - Device driver packages                               %cMauve%'%cReset%
+echo %cMauve% +--------------------------------------------------------+%cReset%
+choice /C 12 /N /M "[1] Run Cleaner or [2] Skip : "
 if %errorlevel%==1 (
-    echo %cGrey%Running advanced disk cleaner...%cReset%
+    echo %cGrey%Preparing disk cleanup utility...%cReset%
+    
+    :: Create registry keys for auto-selection of all cleanup options
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Active Setup Temp Folders" "StateFlags65535" "REG_DWORD" "2" "Enabled Active Setup Temp Folders cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\BranchCache" "StateFlags65535" "REG_DWORD" "2" "Enabled BranchCache cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\D3D Shader Cache" "StateFlags65535" "REG_DWORD" "2" "Enabled D3D Shader Cache cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Delivery Optimization Files" "StateFlags65535" "REG_DWORD" "2" "Enabled Delivery Optimization Files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Device Driver Packages" "StateFlags65535" "REG_DWORD" "2" "Enabled Device Driver Packages cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Downloaded Program Files" "StateFlags65535" "REG_DWORD" "2" "Enabled Downloaded Program Files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Internet Cache Files" "StateFlags65535" "REG_DWORD" "2" "Enabled Internet Cache Files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Language Pack" "StateFlags65535" "REG_DWORD" "2" "Enabled Language Pack cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Offline Pages Files" "StateFlags65535" "REG_DWORD" "2" "Enabled Offline Pages Files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Old ChkDsk Files" "StateFlags65535" "REG_DWORD" "2" "Enabled Old ChkDsk Files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Previous Installations" "StateFlags65535" "REG_DWORD" "2" "Enabled Previous Installations cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Recycle Bin" "StateFlags65535" "REG_DWORD" "2" "Enabled Recycle Bin cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\RetailDemo Offline Content" "StateFlags65535" "REG_DWORD" "2" "Enabled RetailDemo Offline Content cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Service Pack Cleanup" "StateFlags65535" "REG_DWORD" "2" "Enabled Service Pack Cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Setup Log Files" "StateFlags65535" "REG_DWORD" "2" "Enabled Setup Log Files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\System error memory dump files" "StateFlags65535" "REG_DWORD" "2" "Enabled System error memory dump files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\System error minidump files" "StateFlags65535" "REG_DWORD" "2" "Enabled System error minidump files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Temporary Files" "StateFlags65535" "REG_DWORD" "2" "Enabled Temporary Files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Thumbnail Cache" "StateFlags65535" "REG_DWORD" "2" "Enabled Thumbnail Cache cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Update Cleanup" "StateFlags65535" "REG_DWORD" "2" "Enabled Update Cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Upgrade Discarded Files" "StateFlags65535" "REG_DWORD" "2" "Enabled Upgrade Discarded Files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\User file versions" "StateFlags65535" "REG_DWORD" "2" "Enabled User file versions cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows Defender" "StateFlags65535" "REG_DWORD" "2" "Enabled Windows Defender cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows Error Reporting Files" "StateFlags65535" "REG_DWORD" "2" "Enabled Windows Error Reporting Files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows ESD installation files" "StateFlags65535" "REG_DWORD" "2" "Enabled Windows ESD installation files cleanup"
+    call :reg "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows Upgrade Log Files" "StateFlags65535" "REG_DWORD" "2" "Enabled Windows Upgrade Log Files cleanup"
+    
+    :: First try running directly
     cleanmgr /sagerun:65535
+    
+    :: If direct execution fails, try with full path
+    if !errorlevel! neq 0 (
+        echo Retrying with full path...
+        %SystemRoot%\System32\cleanmgr.exe /sagerun:65535
+    )
+    
+    :: Check final execution status
+    if !errorlevel! equ 0 (
+        echo Disk cleanup completed successfully.
+    ) else (
+        echo Error: Disk cleanup failed with code !errorlevel!
+        echo Attempting to launch Disk Cleanup manually...
+        start cleanmgr.exe
+    )
+    pause
 )
 
 :: Install and Launch PC Manager
@@ -636,6 +709,7 @@ if %errorlevel%==1 (
     ) else (
         echo Failed to install PC Manager. Please try manually.
         start "" "ms-windows-store://pdp?hl=en-us&gl=us&ocid=pdpshare&referrer=storeforweb&productid=9pm860492szd&storecid=storeweb-pdp-open-cta"
+        start "" "shell:AppsFolder\Microsoft.PCManager_8wekyb3d8bbwe!App"
         pause
     )
 )
@@ -798,7 +872,7 @@ start "" "https://github.com/emylfy/simplify11?tab=readme-ov-file#-cool-stuff"
 pause
 goto main
 
-:laptopMenu
+:deviceMenu
 cls
 :: Define URLs for modern device manufacturers
 set "url[0]=https://support.hp.com/us-en/drivers"
@@ -855,7 +929,7 @@ echo %cMauve% '%cGrey% [4] Back to Manufacturer Selection         %cMauve%'%cRes
 echo %cMauve% +--------------------------------------------+%cReset%
 
 choice /C 1234 /N /M ">"
-if errorlevel 4 goto laptopMenu
+if errorlevel 4 goto deviceMenu
 if errorlevel 3 (
     start "" "https://support.lenovo.com"
     goto lenovoMenu
@@ -886,6 +960,7 @@ if errorlevel 1 (
 )
 
 :reg
+setlocal
 set "key=%~1"
 set "valueName=%~2"
 set "valueType=%~3"
@@ -893,30 +968,29 @@ set "valueData=%~4"
 set "comment=%~5"
 
 :: Convert registry hive shortcuts to full paths
-set "key=!key:HKLM\=HKEY_LOCAL_MACHINE\!"
-set "key=!key:HKCU\=HKEY_CURRENT_USER\!"
+set "key=%key:HKLM\=HKEY_LOCAL_MACHINE\%"
+set "key=%key:HKCU\=HKEY_CURRENT_USER\%"
 
 :: Create the registry key path if it doesn't exist
-reg add "!key!" /f >nul 2>&1
+reg add "%key%" /f >nul 2>&1
 
 :: Handle different value types
-if /i "!valueType!"=="REG_DWORD" (
-    reg add "!key!" /v "!valueName!" /t REG_DWORD /d "!valueData!" /f 
-) else if /i "!valueType!"=="REG_SZ" (
-    reg add "!key!" /v "!valueName!" /t REG_SZ /d "!valueData!" /f 
-) else if /i "!valueType!"=="REG_BINARY" (
-    reg add "!key!" /v "!valueName!" /t REG_BINARY /d "!valueData!" /f 
+if /i "%valueType%"=="REG_DWORD" (
+    reg add "%key%" /v "%valueName%" /t REG_DWORD /d "%valueData%" /f >nul 2>&1
+) else if /i "%valueType%"=="REG_SZ" (
+    reg add "%key%" /v "%valueName%" /t REG_SZ /d "%valueData%" /f >nul 2>&1
+) else if /i "%valueType%"=="REG_BINARY" (
+    reg add "%key%" /v "%valueName%" /t REG_BINARY /d "%valueData%" /f >nul 2>&1
 ) else (
-    echo %cRed%[FAILED]%cReset% Unsupported registry value type: !valueType!
-    endlocal
+    echo %cRed%[FAILED]%cReset% Unsupported registry value type: %valueType%
     exit /b 1
 )
 
-if !errorlevel! equ 0 (
-    echo %cGreen%[SUCCESS]%cReset% !comment!
+if %errorlevel% equ 0 (
+    echo %cGreen%[SUCCESS]%cReset% %comment%
 ) else (
-    echo %cRed%[FAILED]%cReset% Failed to set !valueName!
+    echo %cRed%[FAILED]%cReset% Failed to set %valueName%
+    exit /b 1
 )
 
-endlocal
-goto :eof
+exit /b 0

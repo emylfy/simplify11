@@ -1,7 +1,7 @@
 # Simplify11 ⚡
 
 <p align="center">
-	<img src="src/logo.png" alt="Simplify11 Logo">
+	<img src="src/media/logo.png" alt="Simplify11 Logo">
 </p>
 
 <p align="center">
@@ -26,6 +26,8 @@
 </p>
 
 </div>
+
+![](https://github.com/emylfy/simplify11/blob/main/src/media/separator.png)
 
 ## 🚀 Quick Start
 
@@ -83,7 +85,7 @@ iwr "https://dub.sh/s11install" | iex
 **Supports package search and installation by using Winget**
 **But also contains a preset of apps such as:**
 
-<img src="src/menu.png" width="60%">
+<img src="src/media/menu.png" width="60%">
 
 </details>
 
@@ -157,7 +159,7 @@ iwr "https://dub.sh/s11install" | iex
 
 </div>
 
----
+![](https://github.com/emylfy/simplify11/blob/main/src/media/separator.png)
 
 <div align="center">
 

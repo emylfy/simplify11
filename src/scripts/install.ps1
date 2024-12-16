@@ -23,10 +23,10 @@ $shortcut.Description = "Launch Simplify11"
 $shortcut.WorkingDirectory = $startMenuPath
 
 # Download icon
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/arnav-kr/windows-11-icons/refs/heads/main/imageres_5308.ico" -OutFile "$env:APPDATA\icon.ico"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/emylfy/simplify11/refs/heads/main/src/media/icon.ico" -OutFile "$env:APPDATA\icon.ico"
 
 # Set the path to the ICO file
-$icoPath = "$env:APPDATA\icon.ico"  # Make sure this path points to the ICO file
+$icoPath = "$env:APPDATA\icon.ico"
 
 # Set the icon for the shortcut
 $shortcut.IconLocation = $icoPath
@@ -37,22 +37,7 @@ $shortcut.Save()
 # Output confirmation message
 Write-Host "Shortcut 'Simplify11' created in the Start Menu."
 
-# Define the shortcut target and the location of the shortcut
-$shortcutPath = "$env:USERPROFILE\Desktop\Simplify11.lnk"
-$targetPath = "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Simplify11.lnk"
+# Launch the shortcut
+Start-Process -FilePath $shortcutPath
 
-# Create a WScript.Shell COM object
-$shell = New-Object -ComObject WScript.Shell
-
-# Create the shortcut
-$shortcut = $shell.CreateShortcut($shortcutPath)
-
-# Set the target path for the shortcut
-$shortcut.TargetPath = $targetPath
-
-# Optionally, set the shortcut name and icon (if desired)
-$shortcut.Description = "Shortcut to Simplify11"
-# $shortcut.IconLocation = "C:\Path\To\Icon.ico" # Uncomment and set if you want a custom icon
-
-# Save the shortcut
-$shortcut.Save()
+exit
