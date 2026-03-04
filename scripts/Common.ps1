@@ -1,0 +1,5 @@
+$Purple = "$([char]0x1b)[38;5;141m"
+$Reset = "$([char]0x1b)[0m"
+$Red = "$([char]0x1b)[38;5;203m"
+$Green = "$([char]0x1b)[38;5;120m"
+$Yellow = "$([char]0x1b)[38;5;220m"
